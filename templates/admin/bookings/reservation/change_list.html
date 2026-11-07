@@ -1,0 +1,5 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li><a href="{% url 'admin:bookings_reservation_approval' %}" class="viewlink">Reservation Approval</a></li>
+  {{ block.super }}
+{% endblock object-tools-items %}

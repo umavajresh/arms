@@ -1,12 +1,9 @@
-import os
+import importlib
 import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent / 'django_arms'
-sys.path.insert(0, str(PROJECT_DIR))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_arms.settings_prod')
-
-from django.core.wsgi import get_wsgi_application
-
-application = get_wsgi_application()
+application = importlib.import_module("config.wsgi").application
+app = application

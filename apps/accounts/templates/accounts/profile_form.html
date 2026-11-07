@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12 col-xs-12">
+            <div class="card card-default rounded-0">
+                <div class="card-header">
+                    <h4 class="card-title"><b>Update Account Details</b></h4>
+                </div>
+                <div class="card-body">
+                    <div class="container-fluid">
+                        <form id="update-user" method="POST" action="{% url 'accounts:profile-edit' %}">
+                            {% csrf_token %}
+                            <div class="mdc-layout-grid">
+                                <div class="mdc-layout-grid__inner">
+                                    <div class="form-group mb-3">
+                                        <label for="first_name" class="control-label">First Name</label>
+                                        <input type="text" class="form-control rounded-0" name="first_name" id="first_name" value="{{ form.first_name.value|default:'' }}" required="required">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="last_name" class="control-label">Last Name</label>
+                                        <input type="text" class="form-control rounded-0" name="last_name" id="last_name" value="{{ form.last_name.value|default:'' }}" required="required">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="username" class="control-label">Username</label>
+                                        <input type="text" class="form-control rounded-0" name="username" id="username" value="{{ form.username.value|default:'' }}" required="required">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="email" class="control-label">Email</label>
+                                        <input type="email" class="form-control rounded-0" name="email" id="email" value="{{ form.email.value|default:'' }}" required="required">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="member_id" class="control-label">User ID</label>
+                                        <input type="text" class="form-control rounded-0" name="member_id" id="member_id" maxlength="50" value="{{ form.member_id.value|default:'' }}">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="mobile" class="control-label">Mobile Number</label>
+                                        <input type="text" class="form-control rounded-0" name="mobile" id="mobile" maxlength="20" value="{{ form.mobile.value|default:'' }}">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="current_password" class="control-label">Enter Password</label>
+                                        <input type="password" class="form-control rounded-0" name="current_password" id="current_password" required="required">
+                                    </div>
+                                    {% for field in form %} {% for error in field.errors %}
+                                    <div class="alert alert-danger my-2">
+                                        <p>{{ error }}</p>
+                                    </div>
+                                    {% endfor %} {% endfor %}
+                                    <div class="form-group mb-3">
+                                        <div class="d-flex w-100 justify-content-end">
+                                            <button class="btn btn-sm rounded-0 btn-primary col-4">
+                                                    Update Profile
+                                                </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

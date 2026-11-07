@@ -1,0 +1,7 @@
+<div class="mb-3">
+  <label for="is_active" class="control-label">Status</label>
+  <select id="is_active" name="is_active" class="form-select form-select-sm rounded-0" required>
+    <option value="True" {% if active is not False %}selected{% endif %}>Active</option>
+    <option value="False" {% if active is False %}selected{% endif %}>Inactive</option>
+  </select>
+</div>

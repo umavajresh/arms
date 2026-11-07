@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<style>
+    main {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+</style>
+<div class="d-flex flex-column w-100 justify-content-center align-items-center">
+    <div class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
+        <div class="card card-default rounded-0">
+            <div class="card-header">
+                <h4 class="card-title"><b>Reset Password</b></h4>
+            </div>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <form id="reset-password-form" action="{% url 'accounts:recovery-reset' %}" method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mdc-layout-grid">
+                            <div class="mdc-layout-grid__inner">
+                                <p class="mb-3">Please enter your new password:</p>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="new_password1" class="control-label">New Password</label>
+                                    <input type="password" class="form-control rounded-0" name="new_password1" id="new_password1" autocomplete="new-password" required="required">
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="new_password2" class="control-label">Confirm Password</label>
+                                    <input type="password" class="form-control rounded-0" name="new_password2" id="new_password2" autocomplete="new-password" required="required">
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <div class="d-flex w-100 justify-content-end align-items-center">
+                                        <button type="submit" class="btn btn-sm rounded-0 btn-primary">
+                                            Reset Password
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+  $(function () {
+    $('#reset-password-form').on('submit', function (event) {
+      event.preventDefault();
+      if ($('#new_password1').val() !== $('#new_password2').val()) {
+        armsShowFormError(this, 'Passwords do not match.');
+        return;
+      }
+      armsPostForm(this, this.action, function () {
+        location.href = "{% url 'accounts:login' %}";
+      });
+    });
+  });
+</script>
+{% endblock ScriptBlock %}

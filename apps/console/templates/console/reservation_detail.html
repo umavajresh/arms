@@ -1,0 +1,121 @@
+{% load static %}
+<style>
+    #uni_modal .modal-footer {
+        display: none
+    }
+
+    #airline-logo {
+        max-width: 3em;
+        max-height: 3em;
+        object-fit: scale-down;
+        object-position: center center;
+    }
+</style>
+<div class="container-fluid" id="e-details">
+    <div class="lh-1">
+        <fieldset>
+            <legend>Flight Information</legend>
+            <hr>
+            <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                    <dl>
+                        <dt>Flight Code</dt>
+                        <dd class="ps-4">{{reservation.flight.code}}</dd>
+                        <dt>Air Craft/Plane Code</dt>
+                        <dd class="ps-4">{{reservation.flight.aircraft.code}}</dd>
+                        <dt>From</dt>
+                        <dd class="ps-4">{{reservation.flight.from_airport.name}}</dd>
+                        <dt>To</dt>
+                        <dd class="ps-4">{{reservation.flight.to_airport.name}}</dd>
+                    </dl>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                    <dl>
+                        <dt>Airline</dt>
+                        <dd class="ps-4"><img src="{% if reservation.flight.airline.logo %}{{ reservation.flight.airline.logo.url}}{% else %}{% static 'img/no-image-available.png' %}{% endif %}" alt="" class="img-thumbnail rounded-circle" id="airline-logo">                            {{reservation.flight.airline.name}}</dd>
+                        <dt>Departure Date and Time</dt>
+                        <dd class="ps-4">{{reservation.flight.departure|date:"F d, Y h:i A"}}</dd>
+                        <dt>Estimated Time of Arrival</dt>
+                        <dd class="ps-4">{{reservation.flight.estimated_arrival|date:"F d, Y h:i A"}}</dd>
+                    </dl>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Pasenger Information</legend>
+            <hr>
+            <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                    <dl>
+                        <dt>Fullname</dt>
+                        <dd class="ps-4">{{ reservation.full_name }}</dd>
+                        <dt>Gender</dt>
+                        <dd class="ps-4">{{reservation.gender}}</dd>
+                        <dt>Contact #</dt>
+                        <dd class="ps-4">{{reservation.contact}}</dd>
+                    </dl>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                    <dl>
+                        <dt>Email</dt>
+                        <dd class="ps-4">{{reservation.email}}</dd>
+                        <dt>Address</dt>
+                        <dd class="ps-4">{{reservation.address}}</dd>
+                    </dl>
+                </div>
+            </div>
+        </fieldset>
+        <hr>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                <dl>
+                    <dt>Seat Type</dt>
+                    <dd class="ps-4">
+                        {{ reservation.get_cabin_display }}
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                <dl>
+                    <dt>Seat Number</dt>
+                    <dd class="ps-4">
+                        {% if reservation.seat_number %}{{ reservation.seat_number }}{% else %}Not assigned{% endif %}
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                <dl>
+                    <dt>Status</dt>
+                    <dd class="ps-4">
+                        <span class="badge bg-{{ reservation.status_badge }} text-sm px-3">{{ reservation.status_label }}</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+<div class="text-end">
+    {% if reservation.can_be_approved %}
+    <button class="btn btn-primary border bg-primary rounded-0 update_reservation" data-status="approved" type="button">Mark as Confirmed</button>
+    {% endif %}
+    {% if reservation.is_active %}
+    <button class="btn btn-danger border bg-danger rounded-0 update_reservation" data-status="cancelled" type="button">Cancel</button>
+    {% endif %}
+    <button class="btn btn-light border bg-light rounded-0" data-bs-dismiss="modal" type="button">Close</button>
+</div>
+<script>
+  $(function () {
+    $('.update_reservation').on('click', function () {
+      const status = $(this).data('status');
+      const message = status === 'approved'
+        ? 'Are you sure to mark this reservation as confirmed?'
+        : 'Are you sure to cancel this reservation?';
+      _conf(message, 'update_reservation', ["'" + status + "'"]);
+    });
+  });
+
+  function update_reservation(status) {
+    armsPostAction("{% url 'console:reservation-status' reservation.pk %}", { status: status });
+  }
+</script>

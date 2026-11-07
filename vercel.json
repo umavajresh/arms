@@ -6,14 +6,14 @@
       "use": "@vercel/python"
     },
     {
-      "src": "django_arms/static/**",
+      "src": "static/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "/django_arms/static/$1"
+      "dest": "/static/$1"
     },
     {
       "src": "/(.*)",

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<section>
+  <div class="row justify-content-center">
+    {% include "console/partials/stat_card.html" with value=airlines label="Total Airlines" icon="text-primary fa fa-th-list" %}
+    {% include "console/partials/stat_card.html" with value=airport label="Total Airports" icon="text-dark fa fa-map-marker" %}
+    {% include "console/partials/stat_card.html" with value=flight label="Total Upcoming Flights" icon="text-success fa fa-calendar-week" %}
+    {% include "console/partials/stat_card.html" with value=aircraft label="Active Aircraft" icon="text-info fa fa-plane" %}
+    {% include "console/partials/stat_card.html" with value=pending_reservations label="Pending Reservations" icon="text-warning fa fa-clock" %}
+    {% include "console/partials/stat_card.html" with value=confirmed_reservations label="Confirmed Reservations" icon="text-success fa fa-check-circle" %}
+  </div>
+</section>
+{% endblock pageContent %}

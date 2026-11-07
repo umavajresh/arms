@@ -1,0 +1,55 @@
+<header>
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top arms-navbar">
+    <div class="container">
+      <a class="navbar-brand navbar-brand-gold" href="{% url 'pages:landing' %}">ARMS 2.0</a>
+      <button class="navbar-toggler rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#primary-navigation" aria-controls="primary-navigation" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="primary-navigation">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="topNav">
+          {% if request.user.is_authenticated and request.user.is_administrator %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:dashboard' %}">Admin Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:airline-list' %}">Airline</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:airport-list' %}">Airport</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:aircraft-list' %}">Aircraft</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:flight-list' %}">Flight</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'admin:flights_flight_upcoming' %}">Upcoming Flights</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'console:reservation-list' %}">Reservation</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'tracking:tracker' %}">Flight Radar</a></li>
+          {% elif request.user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'bookings:dashboard' %}">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'flights:search' %}">Search Flights</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'flights:upcoming' %}">Upcoming Flights</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'bookings:my-reservations' %}">My Bookings</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'tracking:tracker' %}">Flight Radar</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'assistant:chat' %}">AI Travel Agent</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'flights:search' %}">Search Flights</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'tracking:tracker' %}">Live Flight Radar</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'assistant:chat' %}">AI Travel Agent</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'bookings:guest-lookup' %}">Guest Booking Lookup</a></li>
+          {% endif %}
+        </ul>
+        <ul class="navbar-nav d-flex flex-row align-items-center">
+          {% if request.user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'accounts:profile' %}">Howdy, {{ request.user.username }}</a>
+            </li>
+            <li class="nav-item ms-2">
+              <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="nav-link btn btn-sm btn-outline-secondary rounded-0 px-2 py-1">Logout</button>
+              </form>
+            </li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Sign In</a></li>
+            <li class="nav-item ms-2">
+              <a class="nav-link btn btn-sm rounded-0 px-3 py-1 btn-gold" href="{% url 'accounts:register' %}">Register</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div id="intro" class="text-center bg-light"></div>
+</header>

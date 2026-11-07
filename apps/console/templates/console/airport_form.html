@@ -1,0 +1,23 @@
+<div class="container-fluid">
+  <form action="{{ form_action }}" id="airport-form" method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="code" class="control-label">Code</label>
+      <input type="text" id="code" name="code" class="form-control form-control-sm rounded-0" maxlength="5" value="{{ airport.code|default:'' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="name" class="control-label">Name</label>
+      <input type="text" id="name" name="name" class="form-control form-control-sm rounded-0" value="{{ airport.name|default:'' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="city" class="control-label">City</label>
+      <input type="text" id="city" name="city" class="form-control form-control-sm rounded-0" value="{{ airport.city|default:'' }}">
+    </div>
+    <div class="mb-3">
+      <label for="country" class="control-label">Country</label>
+      <input type="text" id="country" name="country" class="form-control form-control-sm rounded-0" value="{{ airport.country|default:'' }}">
+    </div>
+    {% include "console/partials/status_field.html" with active=airport.is_active %}
+  </form>
+</div>
+{% include "console/partials/modal_form_script.html" with form_id="airport-form" %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Aircraft List</h4>
+            <div class="text-start">
+                <button class="btn btn-primary rounded-0" type="button" id="create_new"><i class="fa fa-plus"></i> Add New</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <colgroup>
+                    <col width="5%">
+                    <col width="15%">
+                    <col width="25%">
+                    <col width="20%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="15%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="text-center py-1">#</th>
+                        <th class="text-center py-1">Code</th>
+                        <th class="text-center py-1">Model</th>
+                        <th class="text-center py-1">Manufacturer</th>
+                        <th class="text-center py-1">Business Capacity</th>
+                        <th class="text-center py-1">Economy Capacity</th>
+                        <th class="text-center py-1">Status</th>
+                        <th class="text-center py-1">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aircraft in aircraft_list %}
+                    <tr>
+                        <td class="py-1 text-center">{{ forloop.counter }}</td>
+                        <td class="py-1 text-center">{{ aircraft.code }}</td>
+                        <td class="py-1 text-center">{{ aircraft.model_name }}</td>
+                        <td class="py-1 text-center">{{ aircraft.manufacturer }}</td>
+                        <td class="py-1 text-center">{{ aircraft.business_capacity }}</td>
+                        <td class="py-1 text-center">{{ aircraft.economy_capacity }}</td>
+                        <td class="py-1 text-center">
+                            {% if aircraft.is_active %}
+                            <span class="badge bg-success px-3">Active</span> {% else %}
+                            <span class="badge bg-danger px-3">Inactive</span> {% endif %}
+                        </td>
+                        <td class="py-1 text-center">
+                            <button class="btn btn-sm btn-info edit-data" type="button" data-url="{% url 'console:aircraft-update' aircraft.pk %}" title="Edit"><i class="fa fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger delete-data" type="button" data-url="{% url 'console:aircraft-archive' aircraft.pk %}" title="Delete"><i class="fa fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        $('.delete-data').click(function() {
+            _conf("Are you sure to delete this aircraft?", 'delete_aircraft', ["'" + $(this).attr('data-url') + "'"])
+        })
+        $('#create_new').click(function() {
+            uni_modal("<i class='fa fa-plus'></i> Add New Aircraft", "{% url 'console:aircraft-create' %}")
+        })
+        $('.edit-data').click(function() {
+            uni_modal("<i class='fa fa-edit'></i> Edit Aircraft Details", $(this).attr('data-url'))
+        })
+        $('.table').dataTable();
+    })
+
+    function delete_aircraft(url) {
+        armsPostAction(url);
+    }
+</script>
+{% endblock ScriptBlock %}

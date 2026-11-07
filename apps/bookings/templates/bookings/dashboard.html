@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 text-light">Passenger Dashboard</h2>
+        <span class="badge bg-dark border text-light rounded-0 px-3 py-2">ARMS 2.0</span>
+    </div>
+
+    {% if notifications %}
+    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+        <h6><i class="fas fa-bell"></i> You have {{ notifications.count }} unread notification{{ notifications.count|pluralize }}</h6>
+        {% for notification in notifications %}
+        <div class="notification-item mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <strong>{{ notification.title }}</strong>
+            <br><small class="text-muted">{{ notification.created_at|date:"M d, Y H:i" }}</small>
+            <br>{{ notification.message|truncatewords:20 }}
+            {% if notification.message|length > 100 %}
+            <a href="#" class="btn btn-sm btn-link p-0" onclick="showFullNotification('{% url 'notifications:mark-read' notification.pk %}'); return false;">Read more...</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-3x mb-3 text-primary"></i>
+                    <h4>Search Flights</h4>
+                    <p>Look for available flights based on your travel preferences.</p>
+                    <a href="{% url 'flights:search' %}" class="btn btn-primary mt-2">Search Now</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-ticket-alt fa-3x mb-3 text-success"></i>
+                    <h4>My Bookings</h4>
+                    <p>View and manage all your flight reservations.</p>
+                    <a href="{% url 'bookings:my-reservations' %}" class="btn btn-success mt-2">View Bookings</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-cog fa-3x mb-3 text-info"></i>
+                    <h4>My Profile</h4>
+                    <p>Update your personal information and preferences.</p>
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-info mt-2">Manage Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Recent Reservations</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Flight</th>
+                                    <th>From - To</th>
+                                    <th>Date</th>
+                                    <th>Seat</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_reservations %}
+                                    {% for res in recent_reservations %}
+                                    <tr>
+                                        <td>{{ res.flight.code }}</td>
+                                        <td>{{ res.flight.from_airport.name }} - {{ res.flight.to_airport.name }}</td>
+                                        <td>{{ res.flight.departure|date:"M d, Y" }}</td>
+                                        <td>{{ res.seat_number|default:"Not assigned" }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ res.status_badge }}">{{ res.status_label }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'bookings:confirmation' res.booking_reference %}" class="btn btn-sm btn-info">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No recent reservations found</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        {% if recent_reservations %}
+                        <div class="text-end">
+                            <a href="{% url 'bookings:my-reservations' %}" class="btn btn-outline-success">View All Reservations</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+  function showFullNotification(url) {
+    armsPostAction(url, {}, function (response) {
+      alert(response.full_message);
+    });
+  }
+</script>
+{% endblock ScriptBlock %}

@@ -1,0 +1,10 @@
+<script>
+  $(function () {
+    $('#{{ form_id }}').on('submit', function (event) {
+      event.preventDefault();
+      armsPostForm(this, this.action, function () {
+        location.reload();
+      });
+    });
+  });
+</script>

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<section class="py-4">
+    <div class="container">
+        <h3 class="fw-bolder text-center">Reservation Approval Management</h3>
+        <center>
+            <hr class="bg-primary opacity-100" style="height:3px" width="5%">
+        </center>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Pending Approval</h5>
+                        <h2>{{ stats.pending }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Approved</h5>
+                        <h2>{{ stats.approved }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Rejected</h5>
+                        <h2>{{ stats.rejected }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Cancelled</h5>
+                        <h2>{{ stats.cancelled }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card rounded-0 mb-4">
+            <div class="card-header text-light">
+                <h5 class="card-title">Filter Options</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select rounded-0">
+                            <option value="">All Status</option>
+                            {% for value, label in statuses %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="flight" class="form-label">Flight</label>
+                        <select name="flight" id="flight" class="form-select rounded-0">
+                            <option value="">All Flights</option>
+                            {% for flight in flights %}
+                            <option value="{{ flight.id }}" {% if selected_flight == flight.id|stringformat:"s" %}selected{% endif %}>{{ flight.code }} - {{ flight.from_airport.name }} to {{ flight.to_airport.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">From Date</label>
+                        <input type="date" name="date_from" id="date_from" class="form-control rounded-0" value="{{ date_from|date:'Y-m-d' }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">To Date</label>
+                        <input type="date" name="date_to" id="date_to" class="form-control rounded-0" value="{{ date_to|date:'Y-m-d' }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary form-control rounded-0">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card rounded-0">
+            <div class="card-header text-light">
+                <h5 class="card-title">
+                    <i class="fa fa-list"></i> Reservation List
+                    <span class="badge bg-info">{{ reservations.count }} reservation{{ reservations.count|pluralize }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Reservation #</th>
+                                <th>Passenger</th>
+                                <th>Flight</th>
+                                <th>Route</th>
+                                <th>Departure</th>
+                                <th>Class</th>
+                                <th>Seat</th>
+                                <th>Status</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                            <tr>
+                                <td><strong>{{ reservation.booking_reference }}</strong></td>
+                                <td>
+                                    <div>{{ reservation.first_name }} {{ reservation.last_name }}</div>
+                                    {% if reservation.user %}
+                                    <small class="text-muted">User: {{ reservation.user.username }}</small>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ reservation.flight.code }}</strong></td>
+                                <td>
+                                    <div>{{ reservation.flight.from_airport.name }}</div>
+                                    <small class="text-muted">to {{ reservation.flight.to_airport.name }}</small>
+                                </td>
+                                <td>{{ reservation.flight.departure|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge {% if reservation.cabin == "business" %}bg-primary{% else %}bg-info{% endif %}">{{ reservation.get_cabin_display }}</span>
+                                </td>
+                                <td>{{ reservation.seat_number|default:"-" }}</td>
+                                <td>
+                                    <span class="badge bg-{{ reservation.status_badge }}">{{ reservation.status_label }}</span>
+                                </td>
+                                <td>{{ reservation.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    {% if reservation.status == "pending" %}
+                                    <div class="btn-group" role="group">
+                                        <form method="post" action="{% url 'admin:bookings_reservation_approve' reservation.pk %}" onsubmit="return confirm('Are you sure you want to approve this reservation?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+                                        </form>
+                                        <form method="post" action="{% url 'admin:bookings_reservation_reject' reservation.pk %}" onsubmit="return confirm('Are you sure you want to reject this reservation?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+                                        </form>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">{{ reservation.status_label }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i><br>
+                                    No reservations found matching your criteria.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.7em;
+    }
+    
+    .stats-card {
+        transition: transform 0.2s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock pageContent %}

@@ -1,26 +1,30 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8001
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.production
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    libgl1 \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+RUN addgroup --system arms && adduser --system --ingroup arms --home /home/arms arms
 
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+ARG REQUIREMENTS=requirements.txt
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install -r "${REQUIREMENTS}"
 
-COPY . /app/
+COPY . .
 
-WORKDIR /app/django_arms
-RUN python manage.py collectstatic --noinput
+RUN SECRET_KEY=collectstatic-only \
+    ALLOWED_HOSTS=localhost \
+    DATABASE_URL=sqlite://:memory: \
+    python manage.py collectstatic --noinput \
+    && mkdir -p /app/media \
+    && chown -R arms:arms /app/media /app/staticfiles
 
-EXPOSE 8001
+USER arms
 
-CMD ["gunicorn", "django_arms.wsgi:application", "--bind", "0.0.0.0:8001", "--workers", "3"]
+EXPOSE 8000
+
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--access-logfile", "-"]

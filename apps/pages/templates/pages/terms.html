@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<style>
+    .legal-shell {
+        background-color: var(--arms-surface, #131924);
+        border: 1px solid var(--arms-border, #263345);
+        border-radius: 6px;
+        padding: clamp(1.5rem, 4vw, 3rem);
+        color: var(--arms-text, #e2e8f0);
+    }
+    .legal-shell h1, .legal-shell h2, .legal-shell h3 {
+        color: var(--arms-gold, #c5a880);
+    }
+    .legal-shell p, .legal-shell li {
+        color: var(--arms-muted, #94a3b8);
+        line-height: 1.7;
+    }
+    .legal-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--arms-border, #263345);
+    }
+    .legal-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-12">
+            <div class="legal-shell">
+                <header class="mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <h1 class="h3 fw-bold mb-2">Terms of Service</h1>
+                    <p class="small text-muted mb-0">Draft for operator and legal review. Version 2.0</p>
+                    <p class="small text-warning mb-0">Confirm the operator identity, applicable terms, support contact, and production behavior before publishing.</p>
+                </header>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">1. Acceptance of Terms</h2>
+                    <p>
+                        By accessing or using the Airline Reservation Management System (ARMS 2.0), whether as a registered passenger, administrative user, or guest visitor, you acknowledge that you have read, understood, and agreed to be bound by these Terms of Service and applicable aviation laws.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">2. Flight Inventory and Reservation Nature</h2>
+                    <p>
+                        Flight schedules, fares, and seat counts shown here are records stored in ARMS and are not independently verified or live airline-distribution offers. Submitting a request creates an internal ARMS reservation record and reference.
+                    </p>
+                    <p>
+                        An ARMS status change or approval applies only to the record in this application. Unless ARMS is connected to and confirms a reservation with an airline or authorized booking provider, it does not constitute an airline ticket, confirmed carriage, or boarding pass. Verify travel arrangements directly with the relevant carrier.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">3. Guest Mode and Self-Service Bookings</h2>
+                    <p>
+                        ARMS provides unauthenticated guest booking capabilities. When booking as a guest:
+                    </p>
+                    <ul>
+                        <li>You must provide accurate passenger names exactly matching government-issued photo identification.</li>
+                        <li>A unique, unguessable booking reference is generated for each transaction.</li>
+                        <li>Guest booking lookup and management requires providing both the booking reference and verified passenger credentials (email address or surname).</li>
+                        <li>You are responsible for safeguarding your booking reference code.</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">4. Cancellation and Modification Rules</h2>
+                    <p>
+                        Passengers may cancel reservations through self-service portals (My Bookings or Guest Booking Lookup) subject to the following rules:
+                    </p>
+                    <ul>
+                        <li>ARMS self-service cancellation is subject to the status and departure time recorded in the application.</li>
+                        <li>ARMS cancellation changes the application reservation record; it does not cancel an external airline booking unless that integration is explicitly configured and confirms the cancellation.</li>
+                        <li>Seat availability shown after cancellation reflects the ARMS inventory.</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">5. AI Travel Assistant Disclosures</h2>
+                    <p>
+                        The ARMS AI Travel Assistant provides natural language travel discovery, itinerary suggestions, and policy guidance:
+                    </p>
+                    <ul>
+                        <li>Flight numbers, departure times, fares, and seat counts reflect ARMS records, not independent airline confirmation or live distribution data.</li>
+                        <li>Budget guidance, hotel spending estimates, and destination activity plans are simulated planning estimates and do not constitute fixed binding offers.</li>
+                        <li>Passengers must verify visa, entry requirements, and health documentation with respective embassy authorities before departure.</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">6. Passenger Conduct and Security</h2>
+                    <p>
+                        Users must not attempt automated scraping, injection attacks, unauthorized seat hoarding, or credential enumeration. Violations will result in immediate termination of account access and cancellation of associated reservations.
+                    </p>
+                </section>
+
+                <div class="d-flex justify-content-between align-items-center pt-3">
+                    <a href="{% url 'pages:landing' %}" class="btn btn-sm btn-outline-secondary rounded-0">Return to Home</a>
+                    <a href="{% url 'pages:privacy' %}" class="btn btn-sm btn-outline-light rounded-0">Review Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

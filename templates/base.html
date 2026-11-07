@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% if page_title %}{{ page_title }} | {% endif %}{{ system_name }}</title>
+  <link rel="shortcut icon" href="{% static 'img/logo.jpg' %}" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/datatables/datatables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/select2/css/select2.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/arms.css' %}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/js/all.min.js" integrity="sha512-6PM0qYu5KExuNcKt5bURAoT6KCThUmHRewN3zUFNaoI6Di7XJPTMoT6K0nsagZKk2OB4L7E3q1uQKHNHd4stIQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="{% static 'vendor/jquery/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/popper.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/datatables.min.js' %}"></script>
+  <script src="{% static 'vendor/select2/js/select2.min.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/arms.js' %}"></script>
+  {% block headerContent %}{% endblock headerContent %}
+</head>
+<body>
+  {% if topbar %}
+    {% include "includes/navigation.html" %}
+  {% endif %}
+  <main class="py-5">
+    <div class="container mb-3">
+      {% if messages %}
+        <div class="row">
+          <div class="col-12">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.level_tag }} w-100 rounded-0 mb-2 redirect-msg">
+                <div class="d-flex w-100">
+                  <div class="col-auto flex-shrink-1 flex-grow-1">{{ message }}</div>
+                  <div class="col-auto text-center">
+                    <button class="btn-close btn-sm text-sm" type="button" aria-label="Dismiss" onclick="$(this).closest('.alert').remove()"></button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% block pageContent %}{% endblock pageContent %}
+    </div>
+  </main>
+
+  {% if footer %}
+    <footer class="arms-footer py-4 border-top">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4 col-md-6 col-12">
+            <div class="fw-bold mb-2 arms-footer-brand">ARMS 2.0</div>
+            <p class="small text-muted mb-0">Airline reservation management with provider-dependent AI and flight tracking. ARMS schedule records are not live airline availability.</p>
+          </div>
+          <div class="col-lg-2 col-md-3 col-6">
+            <div class="small fw-semibold text-light mb-2">Travel Services</div>
+            <ul class="list-unstyled small mb-0">
+              <li class="mb-1"><a href="{% url 'flights:search' %}" class="text-secondary text-decoration-none">Search Flights</a></li>
+              <li class="mb-1"><a href="{% url 'tracking:tracker' %}" class="text-secondary text-decoration-none">Flight Radar</a></li>
+              <li class="mb-1"><a href="{% url 'assistant:chat' %}" class="text-secondary text-decoration-none">AI Travel Agent</a></li>
+              <li class="mb-1"><a href="{% url 'bookings:guest-lookup' %}" class="text-secondary text-decoration-none">Guest Lookup</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-3 col-6">
+            <div class="small fw-semibold text-light mb-2">Account</div>
+            <ul class="list-unstyled small mb-0">
+              <li class="mb-1"><a href="{% url 'accounts:login' %}" class="text-secondary text-decoration-none">Sign In</a></li>
+              <li class="mb-1"><a href="{% url 'accounts:register' %}" class="text-secondary text-decoration-none">Register</a></li>
+              <li class="mb-1"><a href="{% url 'accounts:recovery-start' %}" class="text-secondary text-decoration-none">Forgot Password</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-12 col-12">
+            <div class="small fw-semibold text-light mb-2">Legal and Compliance</div>
+            <p class="small text-muted mb-2">ARMS stores reservation records and does not issue airline tickets. Confirm carriage conditions and fare rules with the operating carrier.</p>
+            <div class="d-flex gap-3 small">
+              <a href="{% url 'pages:terms' %}" class="text-secondary text-decoration-none">Terms of Service</a>
+              <span class="text-muted">|</span>
+              <a href="{% url 'pages:privacy' %}" class="text-secondary text-decoration-none">Privacy Policy</a>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top border-secondary border-opacity-25 small text-muted">
+          <div>&copy; {% now 'Y' %} Airline Reservation Management System (ARMS). All rights reserved.</div>
+          <div>Data source: <span class="badge bg-secondary rounded-0">ARMS records</span></div>
+        </div>
+      </div>
+    </footer>
+  {% endif %}
+
+  <a class="ai-travel-launcher" href="{% url 'assistant:chat' %}" aria-label="Open AI Travel Agent">
+    <i class="fas fa-robot" aria-hidden="true"></i>
+    <span>AI Travel Agent</span>
+  </a>
+
+  <div class="modal fade" id="uni_modal" role="dialog">
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content rounded-0">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0" id="submit" onclick="$('#uni_modal form').submit()">Save</button>
+          <button type="button" class="btn btn-sm btn-flat btn-light border rounded-0" data-bs-dismiss="modal">Cancel</button>
+        </div>
+        <div class="modal-sub-footer">
+          <button type="button" class="btn btn-sm btn-flat btn-light border rounded-0" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="confirm_modal" role="dialog">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+      <div class="modal-content rounded-0">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmation</h5>
+        </div>
+        <div class="modal-body">
+          <div id="delete_content"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0" id="confirm" onclick="">Continue</button>
+          <button type="button" class="btn btn-sm btn-flat btn-light border rounded-0" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="viewer_modal" role="dialog">
+    <div class="modal-dialog modal-fullscreen" role="document">
+      <div class="modal-content rounded-0 bg-transparent">
+        <div class="modal-body bg-transparent d-flex flex-column w-100 h-100 align-items-center justify-content-center">
+          <div class="text-end w-100 px-5">
+            <a class="text-decoration-none text-light" href="javascript:void(0)" data-bs-dismiss="modal" aria-label="Close"><i class="fa fa-times fs-3"></i></a>
+          </div>
+          <div id="img-viewer" class="w-75 h-75 bg-dark overflow-auto">
+            <img src="" class="image-thumbnail" id="img-viewer-field" alt="">
+          </div>
+          <div class="w-25 d-flex justify-content-center pt-3">
+            <div class="input-group mb-3">
+              <button class="btn btn-dark btn-sm text-light" type="button" id="zoom-minus" aria-label="Zoom out"><i class="fa fa-minus"></i></button>
+              <input type="text" id="zoom-value" class="form-control form-control-sm rounded-0 w-25 bg-dark border-dark text-light text-center" value="100" aria-label="Zoom level" readonly>
+              <button class="btn btn-dark btn-sm text-light" type="button" id="zoom-plus" aria-label="Zoom in"><i class="fa fa-plus"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% block ScriptBlock %}{% endblock ScriptBlock %}
+</body>
+</html>

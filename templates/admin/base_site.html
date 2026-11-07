@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #header {
+        height: auto;
+        padding: 10px 40px;
+    }
+    
+    .navbar {
+        display: flex;
+        margin-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 10px;
+    }
+    
+    .navbar a {
+        color: white;
+        text-decoration: none;
+        padding: 5px 15px;
+        margin-right: 10px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+    
+    .navbar a:hover, .navbar a.active {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (max-width: 767px) {
+        .navbar {
+            flex-wrap: wrap;
+        }
+        
+        .navbar a {
+            margin-bottom: 5px;
+        }
+    }
+</style>
+{% endblock extrahead %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        {% blocktrans %}{{ site_header|default:_('Django administration') }}{% endblocktrans %}
+    </a>
+</h1>
+{% endblock branding %}
+
+{% block usertools %}
+{{ block.super }}
+<div class="navbar">
+    {% url 'admin:index' as index_url %}<a href="{{ index_url }}" {% if request.path == index_url %}class="active"{% endif %}>
+        <i class="fa fa-dashboard"></i> Dashboard
+    </a>
+    {% url 'admin:flights_flight_upcoming' as upcoming_url %}<a href="{{ upcoming_url }}" {% if request.path == upcoming_url %}class="active"{% endif %}>
+        <i class="fa fa-plane"></i> Upcoming Flights
+    </a>
+    {% url 'admin:flights_flight_changelist' as flights_url %}<a href="{{ flights_url }}" {% if request.path == flights_url %}class="active"{% endif %}>
+        <i class="fa fa-list"></i> Flights List
+    </a>
+    {% url 'admin:flights_flightschedule_changelist' as schedules_url %}<a href="{{ schedules_url }}" {% if request.path == schedules_url %}class="active"{% endif %}>
+        <i class="fa fa-calendar"></i> Flight Schedules
+    </a>
+    {% url 'admin:bookings_reservation_changelist' as reservations_url %}<a href="{{ reservations_url }}" {% if request.path == reservations_url %}class="active"{% endif %}>
+        <i class="fa fa-ticket"></i> Reservations
+    </a>
+</div>
+{% endblock usertools %}

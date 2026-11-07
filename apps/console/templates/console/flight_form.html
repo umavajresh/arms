@@ -1,0 +1,126 @@
+<div class="container-fluid">
+    <form action="{{ form_action }}" id="flight-form" method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <div class="mb-3">
+                    <label for="code" class="control-label">Flight Code</label>
+                    <input type="text" id="code" name="code" class="form-control form-control-sm rounded-0" value="{{ flight.code|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="airline" class="control-label">Airline</label>
+                    <select id="airline" name="airline" class="form-select form-select-sm rounded-0 select2" required>
+                        {% if not flight.airline %}
+                        <option value=""  disabled selected></option>
+                        {% else %}
+                        <option value="" disabled ></option>
+                        {% endif %}
+                        {% for airline in airlines %}
+                            {% if airline.id == flight.airline.id %}
+                            <option value="{{airline.id}}" selected>{{airline.name}}</option>
+                            {% else %}
+                            <option value="{{airline.id}}">{{airline.name}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="aircraft" class="control-label">Aircraft</label>
+                    <select id="aircraft" name="aircraft" class="form-select form-select-sm rounded-0 select2" required>
+                        {% if not flight.aircraft %}
+                        <option value="" disabled selected></option>
+                        {% else %}
+                        <option value="" disabled></option>
+                        {% endif %}
+                        {% for aircraft in aircraft_list %}
+                            {% if aircraft.id == flight.aircraft.id %}
+                            <option value="{{aircraft.id}}" selected>{{aircraft.code}} - {{aircraft.model_name}} (B: {{aircraft.business_capacity}}, E: {{aircraft.economy_capacity}})</option>
+                            {% else %}
+                            <option value="{{aircraft.id}}">{{aircraft.code}} - {{aircraft.model_name}} (B: {{aircraft.business_capacity}}, E: {{aircraft.economy_capacity}})</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="from_airport" class="control-label">From</label>
+                    <select id="from_airport" name="from_airport" class="form-select form-select-sm rounded-0 select2" required>
+                        {% if not flight.from_airport %}
+                        <option value=""  disabled selected></option>
+                        {% else %}
+                        <option value="" disabled ></option>
+                        {% endif %}
+                        {% for airport in airports %}
+                            {% if airport.id == flight.from_airport.id %}
+                            <option value="{{airport.id}}" selected>{{airport.name}}</option>
+                            {% else %}
+                            <option value="{{airport.id}}">{{airport.name}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="to_airport" class="control-label">To</label>
+                    <select id="to_airport" name="to_airport" class="form-select form-select-sm rounded-0 select2" required>
+                        {% if not flight.to_airport %}
+                        <option value=""  disabled selected></option>
+                        {% else %}
+                        <option value="" disabled ></option>
+                        {% endif %}
+                        {% for airport in airports %}
+                            {% if airport.id == flight.to_airport.id %}
+                            <option value="{{airport.id}}" selected>{{airport.name}}</option>
+                            {% else %}
+                            <option value="{{airport.id}}">{{airport.name}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <div class="mb-3">
+                    <label for="departure" class="control-label">Departure Date and Time</label>
+                    <input type="datetime-local" id="departure" name="departure" class="form-control form-control-sm rounded-0" value="{{flight.departure|date:'Y-m-d\TH:i'}}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="estimated_arrival" class="control-label">Estimated Time of Arrival</label>
+                    <input type="datetime-local" id="estimated_arrival" name="estimated_arrival" class="form-control form-control-sm rounded-0" value="{{flight.estimated_arrival|date:'Y-m-d\TH:i'}}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="business_class_price" class="control-label">Business Class Ticket Price (₹)</label>
+                    <input type="text" pattern="^[0-9.]+$" id="business_class_price" name="business_class_price" class="form-control form-control-sm rounded-0 text-end" value="{{ flight.business_class_price|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="economy_price" class="control-label">Economy Ticket Price (₹)</label>
+                    <input type="text" pattern="^[0-9.]+$" id="economy_price" name="economy_price" class="form-control form-control-sm rounded-0 text-end" value="{{ flight.economy_price|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="currency" class="control-label">Currency</label>
+                    <input type="text" id="currency" name="currency" class="form-control form-control-sm rounded-0" value="{{flight.currency|default:'INR'}}" readonly>
+                    <small class="text-muted">All prices are in Indian Rupees (₹)</small>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+  $(function () {
+    $('#uni_modal').on('shown.bs.modal', function () {
+      $('.select2').select2({
+        placeholder: 'Please Select Here',
+        width: '100%',
+        dropdownParent: $('#uni_modal'),
+        containerCssClass: 'form-control form-control-sm rounded-0'
+      });
+    });
+    $('#flight-form').on('submit', function (event) {
+      event.preventDefault();
+      if ($('#from_airport').val() === $('#to_airport').val()) {
+        armsShowFormError(this, 'Invalid From and To Airports.');
+        return;
+      }
+      armsPostForm(this, this.action, function () {
+        location.reload();
+      });
+    });
+  });
+</script>

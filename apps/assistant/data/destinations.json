@@ -1,0 +1,379 @@
+{
+  "destinations": {
+    "kadapa": {
+      "name": "Kadapa",
+      "type": "domestic",
+      "flight_cost": 2200,
+      "hotel_night": 2000,
+      "daily_cost": 1500,
+      "highlights": "Gandikota (The Grand Canyon of India), Belum Caves, Ameen Peer Dargah, and authentic Rayalaseema cuisine",
+      "season": "October through March offers pleasant, cool temperatures ideal for canyon walks and cave explorations.",
+      "itinerary": [
+        "Arrive in Kadapa, visit Devuni Kadapa Sri Lakshmi Venkateswara Swamy Temple and the historic Ameen Peer Dargah",
+        "Full day excursion to Gandikota gorge (Grand Canyon of India), medieval Gandikota Fort, and Penna river viewpoint",
+        "Morning visit to Belum Caves stalactite chambers and Vontimitta Kodandarama Temple before departure"
+      ],
+      "nearest_hub": "Bangalore (BLR) and Chennai (MAA)"
+    },
+    "gandikota": {
+      "name": "Gandikota",
+      "type": "domestic",
+      "flight_cost": 2200,
+      "hotel_night": 1800,
+      "daily_cost": 1500,
+      "highlights": "The majestic Penna river gorge (Grand Canyon of India), 13th-century fort, Raghunathaswamy Temple, and canyon camping",
+      "season": "October through February is the best season for canyon viewpoints and outdoor camping.",
+      "itinerary": [
+        "Travel from Kadapa/Bangalore to Gandikota, check into canyon resort, and watch sunset over the Penna gorge",
+        "Explore Gandikota Fort, granary, Jama Masjid, and adventure trekking around the gorge perimeter",
+        "Morning visit to nearby Belum Caves before return travel"
+      ],
+      "nearest_hub": "Bangalore (BLR) and Chennai (MAA)"
+    },
+    "tirupati": {
+      "name": "Tirupati",
+      "type": "domestic",
+      "flight_cost": 2800,
+      "hotel_night": 2500,
+      "daily_cost": 1800,
+      "highlights": "Sri Venkateswara Temple on Tirumala Hills, Silathoranam natural rock arch, Chandragiri Fort, and temple prasadam",
+      "season": "September through March offers pleasant weather for hill pilgrimage and fort exploration.",
+      "itinerary": [
+        "Arrive in Tirupati, visit Sri Govindaraja Swamy Temple and ISKCON temple in the foothills",
+        "Tirumala darshan pilgrimage, Akasa Ganga, and Silathoranam natural geological wonder",
+        "Visit Chandragiri heritage fort and museum before return travel"
+      ],
+      "nearest_hub": "Tirupati (TIR) / Chennai (MAA)"
+    },
+    "goa": {
+      "name": "Goa",
+      "type": "domestic",
+      "flight_cost": 5200,
+      "hotel_night": 4500,
+      "daily_cost": 3500,
+      "highlights": "Coastal beaches, Portuguese heritage churches in Old Goa, and fresh coastal cuisine",
+      "season": "November to February offers dry, comfortable coastal weather and beach events.",
+      "itinerary": [
+        "Old Goa heritage sites and Latin Quarter of Panaji",
+        "North Goa beaches (Anjuna, Vagator) and sunset cruise",
+        "South Goa relaxed coastal afternoon and spice plantation tour"
+      ]
+    },
+    "delhi": {
+      "name": "Delhi",
+      "type": "domestic",
+      "flight_cost": 4800,
+      "hotel_night": 5500,
+      "daily_cost": 4000,
+      "highlights": "Historic Mughal architecture, museums, vibrant bazaars, and North Indian cuisine",
+      "season": "October through March provides cool, pleasant sightseeing conditions.",
+      "itinerary": [
+        "Red Fort, Chandni Chowk street food, and Jama Masjid",
+        "India Gate, Humayun Tomb, and Qutub Minar",
+        "National Museum, Lodhi Gardens, and Connaught Place"
+      ]
+    },
+    "mumbai": {
+      "name": "Mumbai",
+      "type": "domestic",
+      "flight_cost": 4200,
+      "hotel_night": 6500,
+      "daily_cost": 4500,
+      "highlights": "Marine Drive, Gateway of India, heritage architecture, and coastal nightlife",
+      "season": "November through February is the best period with low humidity and mild breezes.",
+      "itinerary": [
+        "Gateway of India, Colaba Causeway, and Marine Drive evening promenade",
+        "Elephanta Caves boat tour and Kala Ghoda art precinct",
+        "Bandra promenade, Mount Mary, and coastal street food"
+      ]
+    },
+    "bangalore": {
+      "name": "Bangalore",
+      "type": "domestic",
+      "flight_cost": 3800,
+      "hotel_night": 5000,
+      "daily_cost": 3500,
+      "highlights": "Cubbon Park gardens, craft microbreweries, tech hubs, and pleasant weather",
+      "season": "Pleasant throughout the year; October through February is exceptionally mild.",
+      "itinerary": [
+        "Cubbon Park, Bengaluru Palace, and Vidhana Soudha",
+        "Lalbagh Botanical Gardens and traditional breakfast in Basavanagudi",
+        "Indiranagar boutiques, cafe hopping, and craft food tour"
+      ]
+    },
+    "hyderabad": {
+      "name": "Hyderabad",
+      "type": "domestic",
+      "flight_cost": 4000,
+      "hotel_night": 4800,
+      "daily_cost": 3200,
+      "highlights": "Charminar, Golconda Fort, Nizami heritage, and authentic Hyderabadi biryani",
+      "season": "October through March offers temperate weather for exploring outdoor monuments.",
+      "itinerary": [
+        "Charminar, Mecca Masjid, and Laad Bazaar pearl markets",
+        "Golconda Fort guided tour and Qutb Shahi Tombs",
+        "Chowmahalla Palace and an authentic Nizami dining experience"
+      ]
+    },
+    "jaipur": {
+      "name": "Jaipur",
+      "type": "domestic",
+      "flight_cost": 5500,
+      "hotel_night": 5200,
+      "daily_cost": 3500,
+      "highlights": "Pink City palaces, Amber Fort, Rajasthani royal history, and vibrant handicrafts",
+      "season": "October through March is ideal for desert and fort exploration.",
+      "itinerary": [
+        "Amber Fort elephant viewpoints and Jal Mahal",
+        "City Palace, Jantar Mantar observatory, and Hawa Mahal",
+        "Local bazaars (Johari, Bapu) and traditional Rajasthani thali"
+      ]
+    },
+    "kochi": {
+      "name": "Kochi",
+      "type": "domestic",
+      "flight_cost": 4500,
+      "hotel_night": 4600,
+      "daily_cost": 3200,
+      "highlights": "Chinese fishing nets, Fort Kochi heritage, spice warehouses, and backwater access",
+      "season": "September through March brings cool coastal breezes and cultural festivals.",
+      "itinerary": [
+        "Fort Kochi walking tour, St. Francis Church, and Chinese Fishing Nets",
+        "Mattancherry Palace (Dutch Palace) and Jewish Synagogue",
+        "Kerala backwaters day cruise and seafood dining"
+      ]
+    },
+    "chennai": {
+      "name": "Chennai",
+      "type": "domestic",
+      "flight_cost": 3500,
+      "hotel_night": 4500,
+      "daily_cost": 3000,
+      "highlights": "Marina Beach, Kapaleeshwarar Temple, Carnatic music, and South Indian coffee",
+      "season": "November to February is cooler and pleasant for coastal walks.",
+      "itinerary": [
+        "Kapaleeshwarar Temple and historic Mylapore cultural walk",
+        "Government Museum, San Thome Cathedral, and Marina Beach evening",
+        "Day excursion to Mahabalipuram shore temples"
+      ]
+    },
+    "kolkata": {
+      "name": "Kolkata",
+      "type": "domestic",
+      "flight_cost": 5000,
+      "hotel_night": 4800,
+      "daily_cost": 3000,
+      "highlights": "Victoria Memorial, Howrah Bridge, colonial architecture, and Bengali sweets",
+      "season": "October to March offers mild weather and colorful festive atmospheres.",
+      "itinerary": [
+        "Victoria Memorial, St. Paul Cathedral, and Maidan walk",
+        "Howrah Bridge, Kumartuli artisan lane, and riverside ghats",
+        "Park Street culinary institutions and Indian Museum"
+      ]
+    },
+    "pondicherry": {
+      "name": "Pondicherry",
+      "type": "domestic",
+      "flight_cost": 3800,
+      "hotel_night": 4200,
+      "daily_cost": 2800,
+      "highlights": "French Quarter colonial villas, Promenade Beach, Auroville, and seaside cafes",
+      "season": "October to March offers dry, breezy coastal days.",
+      "itinerary": [
+        "French Quarter heritage walk, Notre Dame des Anges, and Promenade Beach sunset",
+        "Auroville Matrimandir visit, organic farm tour, and Serenity Beach",
+        "Paradise Beach boat ride and French bakery hopping"
+      ]
+    },
+    "ooty": {
+      "name": "Ooty",
+      "type": "domestic",
+      "flight_cost": 4500,
+      "hotel_night": 4000,
+      "daily_cost": 2800,
+      "highlights": "Nilgiri toy train, botanical gardens, tea estates, and panoramic Doddabetta Peak",
+      "season": "March to June for spring blooms; October to February for cool mist.",
+      "itinerary": [
+        "Nilgiri Mountain Railway ride and Government Botanical Garden",
+        "Doddabetta Peak viewpoint, tea factory tour, and Ooty Lake boating",
+        "Pykara waterfalls and lake excursion"
+      ]
+    },
+    "shimla": {
+      "name": "Shimla",
+      "type": "domestic",
+      "flight_cost": 6500,
+      "hotel_night": 5500,
+      "daily_cost": 3500,
+      "highlights": "The Ridge, Mall Road, colonial heritage, and Himalayan mountain panoramas",
+      "season": "March to June for pleasant weather; December to February for snow experiences.",
+      "itinerary": [
+        "The Ridge, Christ Church, and Mall Road pedestrian promenade",
+        "Jakhoo Temple scenic trek and ropeway",
+        "Kufri alpine valley viewpoints and pine forest walk"
+      ]
+    },
+    "dubai": {
+      "name": "Dubai",
+      "type": "international",
+      "flight_cost": 18500,
+      "hotel_night": 11000,
+      "daily_cost": 8500,
+      "highlights": "Burj Khalifa, Dubai Mall, desert safari, futuristic architecture, and luxury marinas",
+      "season": "November through March provides comfortable outdoor temperatures and desert activities.",
+      "itinerary": [
+        "Downtown Dubai, Burj Khalifa observation deck, and Dubai Mall fountains",
+        "Evening desert safari with dune bashing and traditional dinner",
+        "Dubai Marina yacht cruise, JBR beach, and Museum of the Future"
+      ]
+    },
+    "singapore": {
+      "name": "Singapore",
+      "type": "international",
+      "flight_cost": 16500,
+      "hotel_night": 12000,
+      "daily_cost": 9000,
+      "highlights": "Gardens by the Bay, Marina Bay Sands, Chinatown, and world-class hawker food",
+      "season": "Warm and tropical year-round; pack light clothing and prepare for brief showers.",
+      "itinerary": [
+        "Marina Bay Sands skyway, Gardens by the Bay, and Cloud Forest dome",
+        "Chinatown heritage walk, Maxwell Hawker Centre, and Little India",
+        "Sentosa Island beaches or world-class Singapore Botanic Gardens"
+      ]
+    },
+    "bangkok": {
+      "name": "Bangkok",
+      "type": "international",
+      "flight_cost": 14500,
+      "hotel_night": 6500,
+      "daily_cost": 5500,
+      "highlights": "Grand Palace, Wat Pho, river express boats, night markets, and Thai street food",
+      "season": "November through February is the coolest and driest period in Thailand.",
+      "itinerary": [
+        "Grand Palace, Wat Pho (Reclining Buddha), and Wat Arun across the river",
+        "Chao Phraya river cruise, Chatuchak or IconSiam, and street food tour",
+        "Jim Thompson House, Lumpini Park, and rooftop panoramic dining"
+      ]
+    },
+    "bali": {
+      "name": "Bali",
+      "type": "international",
+      "flight_cost": 22000,
+      "hotel_night": 7500,
+      "daily_cost": 6000,
+      "highlights": "Ubud rice terraces, coastal beach clubs, water temples, and volcanic viewpoints",
+      "season": "April through October provides sunny, dry weather ideal for beaches and exploring.",
+      "itinerary": [
+        "Ubud cultural center, Tegallalang rice terraces, and Monkey Forest",
+        "Uluwatu cliff temple and Kecak fire dance overlooking the ocean",
+        "Seminyak beach clubs, coastal sunset, and water sports at Nusa Dua"
+      ]
+    },
+    "paris": {
+      "name": "Paris",
+      "type": "international",
+      "flight_cost": 45000,
+      "hotel_night": 16000,
+      "daily_cost": 12000,
+      "highlights": "Eiffel Tower, Louvre Museum, Seine riverbank, Montmartre, and French culinary arts",
+      "season": "April to June and September to October offer mild weather with manageable crowds.",
+      "itinerary": [
+        "Eiffel Tower, Champ de Mars, and Seine sunset river cruise",
+        "Louvre Museum, Tuileries Garden, and Champs-Elysees to Arc de Triomphe",
+        "Montmartre, Sacre-Coeur basilica, and bohemian cafe culture"
+      ]
+    },
+    "london": {
+      "name": "London",
+      "type": "international",
+      "flight_cost": 42000,
+      "hotel_night": 17000,
+      "daily_cost": 13000,
+      "highlights": "Westminster Abbey, Tower of London, British Museum, West End, and Thames walks",
+      "season": "May through September brings pleasant temperatures and long daylight hours.",
+      "itinerary": [
+        "Big Ben, Houses of Parliament, Westminster Abbey, and London Eye",
+        "Tower of London, Tower Bridge, and Borough Market culinary stalls",
+        "British Museum, Covent Garden, and an evening West End performance"
+      ]
+    },
+    "tokyo": {
+      "name": "Tokyo",
+      "type": "international",
+      "flight_cost": 38000,
+      "hotel_night": 14000,
+      "daily_cost": 10000,
+      "highlights": "Shibuya Crossing, Senso-ji temple, futuristic districts, gardens, and authentic ramen",
+      "season": "March to May for cherry blossoms; October to November for clear autumn skies.",
+      "itinerary": [
+        "Asakusa Senso-ji temple, Tokyo Skytree, and Akihabara tech hub",
+        "Meiji Shrine, Harajuku Takeshita Street, and Shibuya Crossing",
+        "Shinjuku Gyoen National Garden, teamLab digital art, and Ginza dining"
+      ]
+    },
+    "kuala lumpur": {
+      "name": "Kuala Lumpur",
+      "type": "international",
+      "flight_cost": 15000,
+      "hotel_night": 6500,
+      "daily_cost": 5500,
+      "highlights": "Petronas Twin Towers, Batu Caves, Jalan Alor street food, and heritage mosques",
+      "season": "Warm and tropical year-round; May to July offers slightly lower precipitation.",
+      "itinerary": [
+        "Petronas Twin Towers skybridge and KLCC Park fountains",
+        "Batu Caves limestone temple and Merdeka Square heritage district",
+        "Jalan Alor night food market and Bukit Bintang shopping boulevard"
+      ]
+    },
+    "colombo": {
+      "name": "Colombo",
+      "type": "international",
+      "flight_cost": 13500,
+      "hotel_night": 6000,
+      "daily_cost": 5000,
+      "highlights": "Galle Face Green, Gangaramaya Temple, Pettah markets, and Ceylon tea lounges",
+      "season": "December through March offers the driest and most pleasant coastal weather.",
+      "itinerary": [
+        "Galle Face Green seaside walk and Old Dutch Hospital precinct",
+        "Gangaramaya Temple and Independence Memorial Hall",
+        "Pettah market street walk and colonial beachfront dinner"
+      ]
+    },
+    "kathmandu": {
+      "name": "Kathmandu",
+      "type": "international",
+      "flight_cost": 15500,
+      "hotel_night": 5500,
+      "daily_cost": 4500,
+      "highlights": "Durbar Square, Boudhanath Stupa, Swayambhunath, and Himalayan mountain vistas",
+      "season": "October to December offers clear Himalayan skies and crisp pleasant temperatures.",
+      "itinerary": [
+        "Kathmandu Durbar Square and historic old alleys",
+        "Boudhanath Stupa and Pashupatinath Temple",
+        "Swayambhunath (Monkey Temple) and Thamel craft markets"
+      ]
+    },
+    "male": {
+      "name": "Male",
+      "type": "international",
+      "flight_cost": 24000,
+      "hotel_night": 22000,
+      "daily_cost": 14000,
+      "highlights": "Overwater bungalows, turquoise coral lagoons, world-class diving, and private atolls",
+      "season": "December through April offers sunny skies and calm turquoise seas.",
+      "itinerary": [
+        "Speedboat arrival to private resort island and sunset overwater dinner",
+        "Coral reef snorkeling and manta ray marine exploration",
+        "Sandbank picnic and sunset dolphin cruise"
+      ]
+    }
+  },
+  "aliases": {
+    "bengaluru": "bangalore",
+    "bombay": "mumbai",
+    "madras": "chennai",
+    "cuddapah": "kadapa",
+    "denpasar": "bali",
+    "maldives": "male"
+  }
+}

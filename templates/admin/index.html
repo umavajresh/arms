@@ -1,0 +1,11 @@
+{% extends "admin/index.html" %}
+{% block content %}
+  {{ block.super }}
+  <div class="module arms-quick-links">
+    <h2>ARMS Quick Links</h2>
+    <ul>
+      <li><a href="{% url 'admin:flights_flight_upcoming' %}"><i class="fas fa-plane"></i> View Upcoming Flights Dashboard</a></li>
+      <li><a href="{% url 'admin:bookings_reservation_approval' %}"><i class="fas fa-clipboard-check"></i> Reservation Approval Management</a></li>
+    </ul>
+  </div>
+{% endblock content %}

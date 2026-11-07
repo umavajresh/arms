@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<style>
+    .legal-shell {
+        background-color: var(--arms-surface, #131924);
+        border: 1px solid var(--arms-border, #263345);
+        border-radius: 6px;
+        padding: clamp(1.5rem, 4vw, 3rem);
+        color: var(--arms-text, #e2e8f0);
+    }
+    .legal-shell h1, .legal-shell h2, .legal-shell h3 {
+        color: var(--arms-gold, #c5a880);
+    }
+    .legal-shell p, .legal-shell li {
+        color: var(--arms-muted, #94a3b8);
+        line-height: 1.7;
+    }
+    .legal-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--arms-border, #263345);
+    }
+    .legal-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-12">
+            <div class="legal-shell">
+                <header class="mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <h1 class="h3 fw-bold mb-2">Privacy Policy</h1>
+                    <p class="small text-muted mb-0">Draft for operator and legal review. Version 2.0</p>
+                    <p class="small text-warning mb-0">Confirm the operator identity, actual retention settings, provider integrations, and privacy contact before publishing.</p>
+                </header>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">1. Overview and Scope</h2>
+                    <p>
+                        This draft describes data handled by the Airline Reservation Management System (ARMS 2.0). The operator must review it against the deployed configuration and applicable law before publication.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">2. Information We Collect</h2>
+                    <p>
+                        Depending on the features used, ARMS may process:
+                    </p>
+                    <ul>
+                        <li>Passenger Details: Full legal name, gender, contact phone number, and email address for booking confirmations.</li>
+                        <li>Flight and Seat Preferences: Selected flight route, departure dates, seat class, and specific seat allocation.</li>
+                        <li>Account Authentication: Hashed passwords, Two-Factor Authentication (2FA) verification timestamps, and security questions.</li>
+                        <li>AI Travel Conversations: Temporary session interaction history used solely to provide contextual travel recommendations during your active visit.</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">3. Guest Mode and Data Minimization</h2>
+                    <p>
+                        Guest workflows may collect the passenger and contact details required by the booking form. Do not assume a booking reference alone protects a record: the operator must verify that every guest lookup and management action requires the configured secondary verification.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">4. Data Storage and Security Controls</h2>
+                    <p>
+                        Security depends on the deployment configuration. The operator should verify and maintain, at minimum:
+                    </p>
+                    <ul>
+                        <li>TLS, secure cookies, and HSTS are enabled at the public deployment boundary.</li>
+                        <li>Authentication uses Django password hashing; the deployed password-hasher configuration must be reviewed.</li>
+                        <li>Use a production database with transaction and locking behavior appropriate for concurrent seat allocation; SQLite does not provide row-level locks.</li>
+                        <li>Configure shared-cache rate limits for authentication, guest lookup, and other sensitive endpoints, and verify their behavior in production.</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">5. Third-Party Integrations</h2>
+                    <p>
+                        Flight-tracking providers may receive aircraft lookup parameters when that feature is used. The operator must document the providers actually configured. If an external AI provider is configured, the current message, recent conversation context, and relevant ARMS inventory context may be sent to that provider to generate a response. Do not include sensitive passenger information in chat. Without an AI provider key, the assistant uses a local guided fallback.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">6. Retention and User Controls</h2>
+                    <p>
+                        Chat context is kept in the current Django session and can be cleared using the chat interface; actual session expiry depends on the deployed session configuration. Reservation and account records may persist according to the operator's retention obligations and configured deletion process. The operator must publish the applicable retention periods before launch.
+                    </p>
+                </section>
+
+                <section class="legal-section">
+                    <h2 class="h5 fw-semibold mb-2">7. Your Rights and Contact Information</h2>
+                    <p>
+                        Privacy rights and request procedures depend on the operator and applicable law. No verified privacy contact is configured in this draft; the operator must replace this notice with a monitored, valid contact channel before publishing.
+                    </p>
+                </section>
+
+                <div class="d-flex justify-content-between align-items-center pt-3">
+                    <a href="{% url 'pages:landing' %}" class="btn btn-sm btn-outline-secondary rounded-0">Return to Home</a>
+                    <a href="{% url 'pages:terms' %}" class="btn btn-sm btn-outline-light rounded-0">Review Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

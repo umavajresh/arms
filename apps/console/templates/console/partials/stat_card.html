@@ -1,0 +1,16 @@
+{% load humanize %}
+<div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+  <div class="card card-default rounded-0 border border-gray h-100">
+    <div class="card-body">
+      <div class="d-flex w-100 align-items-center">
+        <div class="col-3">
+          <i class="fs-1 {{ icon }}"></i>
+        </div>
+        <div class="col-9 text-center">
+          <h1>{{ value|intcomma }}</h1>
+          <h3><b>{{ label }}</b></h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

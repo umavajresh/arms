@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+            <div class="card rounded-0 mb-4" style="background-color: var(--arms-surface, #131924); border: 1px solid var(--arms-border, #263345); box-shadow: none;">
+                <div class="card-header" style="background-color: var(--arms-card, #182230); border-bottom: 1px solid var(--arms-border, #263345);">
+                    <div class="h5 card-title fw-bold mb-0 text-light">My Profile</div>
+                </div>
+                <div class="card-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted">Full Name</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.first_name }} {{ user.last_name }}</dd>
+
+                                    <dt class="col-sm-4 text-muted">Email</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.email }}</dd>
+
+                                    <dt class="col-sm-4 text-muted">Username</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.username }}</dd>
+
+                                    <dt class="col-sm-4 text-muted">User ID</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.member_id|default:"Not specified" }}</dd>
+
+                                    <dt class="col-sm-4 text-muted">Mobile</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.mobile|default:"Not specified" }}</dd>
+
+                                    <dt class="col-sm-4 text-muted">Account Role</dt>
+                                    <dd class="col-sm-8 text-light">{{ user.get_role_display }}</dd>
+
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer" style="background-color: var(--arms-card, #182230); border-top: 1px solid var(--arms-border, #263345);">
+                    <div class="d-flex w-100 justify-content-end gap-2">
+                        <a href="{% url 'accounts:password-change' %}" class="btn btn-outline-secondary btn-sm rounded-0">Update Password</a>
+                        <a href="{% url 'accounts:profile-edit' %}" class="btn btn-sm rounded-0" style="background-color: var(--arms-gold, #c5a880); color: #0b0f17; font-weight: 600;">Update Profile</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card rounded-0 mb-4" style="background-color: var(--arms-surface, #131924); border: 1px solid var(--arms-border, #263345); box-shadow: none;">
+                <div class="card-header" style="background-color: var(--arms-card, #182230); border-bottom: 1px solid var(--arms-border, #263345);">
+                    <div class="h5 card-title fw-bold mb-0 text-light">AI Travel Assistant Preferences</div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'accounts:preferences-update' %}">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6 col-12">
+                                <label for="preferred_language" class="form-label small text-muted">Preferred Conversation Language</label>
+                                <select class="form-select rounded-0" id="preferred_language" name="preferred_language" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                                    {% for value, label in preference_form.fields.preferred_language.choices %}
+                                        <option value="{{ value }}" {% if value == preference_form.instance.preferred_language %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label for="preferred_currency" class="form-label small text-muted">Display Currency</label>
+                                <select class="form-select rounded-0" id="preferred_currency" name="preferred_currency" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                                    {% for value, label in preference_form.fields.preferred_currency.choices %}
+                                        <option value="{{ value }}" {% if value == preference_form.instance.preferred_currency %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label for="preferred_seat_class" class="form-label small text-muted">Default Travel Class</label>
+                                <select class="form-select rounded-0" id="preferred_seat_class" name="preferred_seat_class" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                                    {% for value, label in preference_form.fields.preferred_seat_class.choices %}
+                                        <option value="{{ value }}" {% if value == preference_form.instance.preferred_seat_class %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label for="budget_level" class="form-label small text-muted">Planning Budget Level</label>
+                                <select class="form-select rounded-0" id="budget_level" name="budget_level" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                                    {% for value, label in preference_form.fields.budget_level.choices %}
+                                        <option value="{{ value }}" {% if value == preference_form.instance.budget_level %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label for="dietary_preference" class="form-label small text-muted">In-Flight Meal Preference</label>
+                                <input type="text" class="form-control rounded-0" id="dietary_preference" name="dietary_preference" value="{{ preference_form.instance.dietary_preference }}" placeholder="e.g. Vegetarian, Halal, Gluten-Free" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label for="interests" class="form-label small text-muted">Travel Interests</label>
+                                <input type="text" class="form-control rounded-0" id="interests" name="interests" value="{{ preference_form.instance.interests }}" placeholder="e.g. beach, culture, museums, adventure" style="background-color: #0b0f17; border-color: var(--arms-border, #263345); color: #e2e8f0;">
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-sm rounded-0 px-3" style="background-color: var(--arms-gold, #c5a880); color: #0b0f17; font-weight: 600;">
+                                    Save Preferences
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card rounded-0" style="background-color: var(--arms-surface, #131924); border: 1px solid var(--arms-border, #263345); box-shadow: none;">
+                <div class="card-header" style="background-color: var(--arms-card, #182230); border-bottom: 1px solid var(--arms-border, #263345);">
+                    <div class="h5 card-title fw-bold mb-0 text-light">Security and Two-Factor Authentication</div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="h6 fw-semibold text-light mb-1">Two-Factor Authentication (OTP)</h2>
+                            <p class="text-muted small mb-2">
+                                Require a 6-digit one-time passcode generated for your account whenever you sign in. This protects against unauthorized access.
+                            </p>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small fw-semibold text-secondary">Current status:</span>
+                                {% if user.two_factor_enabled %}
+                                <span class="badge bg-success rounded-0">Enabled</span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-0">Disabled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <form method="POST" action="{% url 'accounts:two-factor-toggle' %}">
+                                {% csrf_token %}
+                                {% if user.two_factor_enabled %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-0">
+                                    Disable 2FA
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-sm rounded-0" style="background-color: var(--arms-gold, #c5a880); color: #0b0f17; font-weight: 600;">
+                                    Enable 2FA
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

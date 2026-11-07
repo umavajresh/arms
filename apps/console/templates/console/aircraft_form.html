@@ -1,0 +1,27 @@
+<div class="container-fluid">
+  <form action="{{ form_action }}" id="aircraft-form" method="post">
+    {% csrf_token %}
+    <div class="form-group mb-3">
+      <label for="code" class="control-label">Aircraft Code</label>
+      <input type="text" name="code" id="code" class="form-control form-control-sm rounded-0" maxlength="5" value="{{ aircraft.code|default:'' }}" required>
+    </div>
+    <div class="form-group mb-3">
+      <label for="model_name" class="control-label">Model</label>
+      <input type="text" name="model_name" id="model_name" class="form-control form-control-sm rounded-0" value="{{ aircraft.model_name|default:'' }}" required>
+    </div>
+    <div class="form-group mb-3">
+      <label for="manufacturer" class="control-label">Manufacturer</label>
+      <input type="text" name="manufacturer" id="manufacturer" class="form-control form-control-sm rounded-0" value="{{ aircraft.manufacturer|default:'' }}" required>
+    </div>
+    <div class="form-group mb-3">
+      <label for="business_capacity" class="control-label">Business Class Capacity</label>
+      <input type="number" name="business_capacity" id="business_capacity" class="form-control form-control-sm rounded-0" value="{{ aircraft.business_capacity|default:0 }}" required min="0">
+    </div>
+    <div class="form-group mb-3">
+      <label for="economy_capacity" class="control-label">Economy Class Capacity</label>
+      <input type="number" name="economy_capacity" id="economy_capacity" class="form-control form-control-sm rounded-0" value="{{ aircraft.economy_capacity|default:0 }}" required min="0">
+    </div>
+    {% include "console/partials/status_field.html" with active=aircraft.is_active %}
+  </form>
+</div>
+{% include "console/partials/modal_form_script.html" with form_id="aircraft-form" %}

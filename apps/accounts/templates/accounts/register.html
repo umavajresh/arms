@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block headerContent %}
+<style>
+  main {
+    min-height: 100vh;
+    width: 100%;
+    padding-top: 80px;
+    padding-bottom: 2rem;
+    overflow-y: auto;
+  }
+  .registration-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - 100px);
+    padding: 1rem 0;
+  }
+  .card-registration {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 1rem 0;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 768px) {
+    main {
+      padding-top: 60px;
+    }
+    .registration-container {
+      padding: 0.5rem;
+      min-height: calc(100vh - 80px);
+    }
+    .card-registration {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+{% endblock headerContent %}
+{% block pageContent %}
+<div class="registration-container">
+  <div class="row justify-content-center w-100">
+    <div class="col-lg-5 col-md-6 col-sm-12">
+      <div class="card card-default rounded-0 card-registration">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="card-title mb-0"><b>Passenger Registration</b></h4>
+          <span class="badge bg-dark border text-light rounded-0">ARMS 2.0</span>
+        </div>
+        <div class="card-body">
+          <div class="container-fluid">
+            <form id="register-user" method="post" action="{% url 'accounts:register' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="first_name" class="control-label">First Name</label>
+                <input type="text" class="form-control rounded-0" name="first_name" id="first_name" required>
+              </div>
+              <div class="form-group">
+                <label for="last_name" class="control-label">Last Name</label>
+                <input type="text" class="form-control rounded-0" name="last_name" id="last_name" required>
+              </div>
+              <div class="form-group">
+                <label for="email" class="control-label">Email</label>
+                <input type="email" class="form-control rounded-0" name="email" id="email" required>
+              </div>
+              <div class="form-group">
+                <label for="member_id" class="control-label">User ID</label>
+                <input type="text" class="form-control rounded-0" name="member_id" id="member_id" maxlength="50" required>
+              </div>
+              <div class="form-group">
+                <label for="mobile" class="control-label">Mobile Number</label>
+                <input type="text" class="form-control rounded-0" name="mobile" id="mobile" maxlength="20" required pattern="[0-9]+" title="Please enter only numbers">
+              </div>
+              <div class="form-group">
+                <label for="username" class="control-label">Username</label>
+                <input type="text" class="form-control rounded-0" name="username" id="username" required>
+              </div>
+              <div class="form-group">
+                <h5 class="mb-2">Security Information</h5>
+                <p class="text-muted small">This information will be used to reset your password if you forget it.</p>
+              </div>
+              <div class="form-group">
+                <label for="date_of_birth" class="control-label">Date of Birth</label>
+                <input type="date" class="form-control rounded-0" name="date_of_birth" id="date_of_birth" required>
+              </div>
+              <div class="form-group">
+                <label for="security_question" class="control-label">Security Question</label>
+                <select class="form-control rounded-0" name="security_question" id="security_question" required>
+                  <option value="">Select a security question</option>
+                  {% for value, label in form.fields.security_question.choices %}
+                    {% if value %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="security_answer" class="control-label">Security Answer</label>
+                <input type="text" class="form-control rounded-0" name="security_answer" id="security_answer" required>
+                <small class="form-text text-muted">Remember this answer exactly as you'll need it to reset your password.</small>
+              </div>
+              <div class="form-group">
+                <label for="password1" class="control-label">Password</label>
+                <input type="password" class="form-control rounded-0" name="password1" id="password1" required minlength="8">
+                <small class="form-text text-muted">Password must be at least 8 characters long.</small>
+              </div>
+              <div class="form-group">
+                <label for="password2" class="control-label">Confirm Password</label>
+                <input type="password" class="form-control rounded-0" name="password2" id="password2" required>
+                <div id="password-match-feedback" class="invalid-feedback">Passwords do not match.</div>
+              </div>
+              <div class="form-group">
+                <div class="d-flex w-100 justify-content-between">
+                  <a href="{% url 'accounts:login' %}" class="col-auto">Already have an Account</a>
+                  <button class="btn btn-sm rounded-0 btn-primary col-6">Create Account</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock pageContent %}
+{% block ScriptBlock %}
+<script>
+  $(function () {
+    function passwordsMatch() {
+      const confirmation = $('#password2').val();
+      const matches = confirmation === '' || confirmation === $('#password1').val();
+      $('#password2').toggleClass('is-invalid', !matches);
+      $('#password-match-feedback').toggle(!matches);
+      return matches;
+    }
+
+    $('#password1, #password2').on('input', passwordsMatch);
+
+    $('#register-user').on('submit', function (event) {
+      event.preventDefault();
+      if (!passwordsMatch()) {
+        armsShowFormError(this, 'Passwords do not match.');
+        return;
+      }
+      const form = $(this);
+      armsPostForm(this, this.action, function () {
+        end_loader();
+        form.find('.err-msg').remove();
+        form.prepend($('<div class="alert alert-success err-msg">').text('Registration successful! Redirecting to login page...'));
+        setTimeout(function () {
+          location.href = "{% url 'accounts:login' %}";
+        }, 2000);
+      });
+    });
+  });
+</script>
+{% endblock ScriptBlock %}

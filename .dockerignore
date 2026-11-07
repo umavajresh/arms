@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.py[cod]
+.env
+.env.*
+db.sqlite3
+test-db.sqlite3
+media
+test-media
+staticfiles
+.coverage
+htmlcov
+.vercel

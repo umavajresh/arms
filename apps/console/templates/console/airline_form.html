@@ -1,0 +1,44 @@
+{% load static %}
+<div class="container-fluid">
+  <form action="{{ form_action }}" id="airline-form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="code" class="control-label">Code</label>
+      <input type="text" id="code" name="code" class="form-control form-control-sm rounded-0" maxlength="5" value="{{ airline.code|default:'' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="name" class="control-label">Name</label>
+      <input type="text" id="name" name="name" class="form-control form-control-sm rounded-0" value="{{ airline.name|default:'' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="country" class="control-label">Country</label>
+      <input type="text" id="country" name="country" class="form-control form-control-sm rounded-0" value="{{ airline.country|default:'' }}">
+    </div>
+    {% include "console/partials/status_field.html" with active=airline.is_active %}
+    <div class="mb-3">
+      <label for="logo" class="form-label">Logo File</label>
+      <input class="form-control" type="file" name="logo" accept="image/*" id="logo">
+    </div>
+    <div class="mb-3 text-center">
+      <img src="{% if airline.logo %}{{ airline.logo.url }}{% else %}{% static 'img/no-image-available.png' %}{% endif %}" alt="{{ airline.name|default:'Airline logo' }}" class="img-thumbnail avatar airline-logo-preview" id="logo-preview">
+    </div>
+  </form>
+</div>
+<script>
+  $(function () {
+    const placeholder = "{% static 'img/no-image-available.png' %}";
+    $('#logo').on('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) {
+        $('#logo-preview').attr('src', placeholder);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        $('#logo-preview').attr('src', event.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+</script>
+{% include "console/partials/modal_form_script.html" with form_id="airline-form" %}
