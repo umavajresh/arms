@@ -463,3 +463,14 @@ img.img-thumbnail.airline-logo-preview {
     object-fit: scale-down;
     object-position: center center;
 }
+
+.table {
+    --bs-table-striped-color: var(--arms-text, #e2e8f0);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+    --bs-table-active-color: var(--arms-text, #e2e8f0);
+    --bs-table-active-bg: rgba(255, 255, 255, 0.06);
+    --bs-table-hover-color: var(--arms-text, #e2e8f0);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+    color: var(--arms-text, #e2e8f0);
+    border-color: var(--arms-border, #263345);
+}
