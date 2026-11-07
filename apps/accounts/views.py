@@ -41,6 +41,7 @@ class AnonymousOnlyMixin:
 class AuthPageMixin(PageMixin):
     topbar = False
     footer = False
+    assistant_launcher = False
 
 
 @public_view
@@ -62,7 +63,14 @@ class LoginView(AnonymousOnlyMixin, AuthPageMixin, TemplateView):
         if user is None:
             return json_failure("Incorrect User ID or password")
         if user.two_factor_enabled:
-            TwoFactorChallenge(request.session).start(user)
+            challenge = TwoFactorChallenge(request.session)
+            if not challenge.start(user):
+                challenge.clear()
+                return json_failure(
+                    "We could not email your verification code. "
+                    "Please try again in a few minutes.",
+                    http_status=503,
+                )
             return json_result(
                 "2fa_required", redirect=reverse("accounts:two-factor-verify")
             )
@@ -200,6 +208,7 @@ class ProfileView(PageMixin, TemplateView):
 
 class ProfileUpdateView(PageMixin, SuccessMessageMixin, UpdateView):
     template_name = "accounts/profile_form.html"
+    assistant_launcher = False
     page_title = "Update Profile"
     form_class = ProfileForm
     success_url = reverse_lazy("accounts:profile")
@@ -211,6 +220,7 @@ class ProfileUpdateView(PageMixin, SuccessMessageMixin, UpdateView):
 
 class PasswordChangeView(PageMixin, SuccessMessageMixin, auth_views.PasswordChangeView):
     template_name = "accounts/password_change.html"
+    assistant_launcher = False
     page_title = "Update Password"
     form_class = StyledPasswordChangeForm
     success_url = reverse_lazy("accounts:profile")
@@ -274,20 +284,20 @@ class RecoveryVerifyView(RecoveryStepMixin, FormView):
             form.cleaned_data["date_of_birth"], form.cleaned_data["security_answer"]
         ):
             return redirect("accounts:recovery-reset")
-        return self.reject()
+        return self.reject(form)
 
     def form_invalid(self, form):
         self.flow.verify_identity(None, "")
-        return self.reject()
+        return self.reject(form)
 
-    def reject(self):
+    def reject(self, form):
         if not self.flow.is_active():
             messages.error(
                 self.request, "Too many attempts. Please restart password recovery."
             )
             return redirect("accounts:recovery-start")
         messages.error(self.request, "The details did not match. Please try again.")
-        return self.render_to_response(self.get_context_data())
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 @public_view

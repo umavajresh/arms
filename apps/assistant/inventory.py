@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.bookings.selectors import with_seat_availability
 from apps.flights.models import Flight
+from apps.flights.querysets import start_of_day
 
 DOMESTIC_COUNTRY = "India"
 DOMESTIC_HUB_CODES = ("MAA", "BLR", "HYD", "DEL", "BOM")
@@ -61,7 +62,7 @@ def _month_window(month):
         if month == "next month":
             start = (start + datetime.timedelta(days=32)).replace(day=1)
         end = (start + datetime.timedelta(days=32)).replace(day=1)
-        return Q(departure__date__gte=start, departure__date__lt=end)
+        return Q(departure__gte=start_of_day(start), departure__lt=start_of_day(end))
     try:
         number = datetime.datetime.strptime(month, "%B").month
     except ValueError:

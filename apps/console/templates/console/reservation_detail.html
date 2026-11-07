@@ -100,7 +100,7 @@
     <button class="btn btn-primary border bg-primary rounded-0 update_reservation" data-status="approved" type="button">Mark as Confirmed</button>
     {% endif %}
     {% if reservation.is_active %}
-    <button class="btn btn-danger border bg-danger rounded-0 update_reservation" data-status="cancelled" type="button">Cancel</button>
+    <button class="btn btn-danger border bg-danger rounded-0 update_reservation" data-status="cancelled" type="button">Cancel Reservation</button>
     {% endif %}
     <button class="btn btn-light border bg-light rounded-0" data-bs-dismiss="modal" type="button">Close</button>
 </div>
@@ -108,10 +108,11 @@
   $(function () {
     $('.update_reservation').on('click', function () {
       const status = $(this).data('status');
-      const message = status === 'approved'
-        ? 'Are you sure to mark this reservation as confirmed?'
-        : 'Are you sure to cancel this reservation?';
-      _conf(message, 'update_reservation', ["'" + status + "'"]);
+      const approving = status === 'approved';
+      const message = approving
+        ? 'Confirm this reservation? Registered passengers also get an in-app notification.'
+        : 'Cancel this reservation? The seat will be released.';
+      _conf(message, 'update_reservation', ["'" + status + "'"], approving ? 'Confirm reservation' : 'Cancel reservation');
     });
   });
 

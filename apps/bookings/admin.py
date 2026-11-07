@@ -1,6 +1,7 @@
 import datetime
 
 from django.contrib import admin, messages
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -77,14 +78,12 @@ class ReservationAdmin(admin.ModelAdmin):
         context = {
             **self.admin_site.each_context(request),
             "title": "Reservation Approval Management",
+            "topbar": True,
             "opts": self.model._meta,
             "reservations": reservations,
             "flights": Flight.objects.with_route().order_by("code"),
             "statuses": Reservation.Status.choices,
-            "stats": {
-                choice.value: Reservation.objects.filter(status=choice).count()
-                for choice in Reservation.Status
-            },
+            "stats": self.status_totals(),
             "selected_status": status,
             "selected_flight": flight_id,
             "date_from": date_from,
@@ -93,6 +92,15 @@ class ReservationAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request, "admin/bookings/reservation/approval.html", context
         )
+
+    def status_totals(self):
+        totals = dict.fromkeys(Reservation.Status.values, 0)
+        totals.update(
+            Reservation.objects.order_by()
+            .values_list("status")
+            .annotate(total=Count("pk"))
+        )
+        return totals
 
     def approve_view(self, request, pk):
         reservation = get_object_or_404(Reservation.objects.with_flight(), pk=pk)

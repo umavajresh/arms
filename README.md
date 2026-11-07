@@ -19,6 +19,7 @@ Project demonstration: [YouTube video](https://youtu.be/EJkb_slY4gU?si=LH_LaqsJE
 - [Deployment](#deployment)
 - [Management commands](#management-commands)
 - [Quality and testing](#quality-and-testing)
+- [Usability study](#usability-study)
 - [Engineering conventions](#engineering-conventions)
 - [Security and operational notes](#security-and-operational-notes)
 - [Upgrade notes for the restructured codebase](#upgrade-notes-for-the-restructured-codebase)
@@ -28,29 +29,31 @@ Project demonstration: [YouTube video](https://youtu.be/EJkb_slY4gU?si=LH_LaqsJE
 ### Guests
 
 - Search scheduled flights by origin, destination, and date, with time-of-day, price range, and price-sort filters. When filters remove every result, the unfiltered results for that date are shown; when the date has no flights, the next departures on the route are suggested.
-- Choose up to six seats on an interactive seat map, enter passenger and contact details, and receive a `GUEST-XXXX-XXXX` booking reference.
-- Retrieve or cancel a guest reservation with the booking reference plus the passenger email or last name. Lookups and cancellations are rate limited per client address.
+- The search forms stop the same airport being chosen twice before the form is sent, and the date pickers only offer dates inside the booking window. If an invalid search still reaches the server, the visitor is returned to the search page with a specific message and with everything they entered kept.
+- Choose up to six seats on an interactive seat map, enter passenger and contact details, and receive a `GUEST-XXXX-XXXX` booking reference. Every traveller in one submission shares that reference, and the confirmation lists all of them with their own status.
+- Retrieve a guest booking with its reference plus the email or surname of any traveller on it. The lookup shows every traveller; cancelling cancels the whole booking. Lookups and cancellations are rate limited per client address.
 
 ### Passengers
 
 - Register with a username, a separate User ID, contact details, date of birth, and a hashed password-recovery answer.
 - Sign in with either the username or the User ID. Sessions last 24 hours.
 - Optional email-delivered one-time passcode (two-factor authentication).
-- Book seats after confirming the account password and a short arithmetic human check. The verification is valid for three minutes and locks for 15 minutes after five failures.
+- Book seats after confirming the account password and a short arithmetic human check. The verification is valid for three minutes and locks for 15 minutes after five failures. The first traveller is prefilled with the signed-in passenger's name.
 - Dashboard with recent reservations and unread notifications, a reservation list with self-service cancellation before departure, a profile page, password change, and travel-assistant preferences.
 - Password recovery through date of birth and security answer, limited to five attempts within a ten-minute flow.
 
 ### Administrators
 
-- Operations console (`/manage/`) for airlines, airports, aircraft, flights, and reservations. Records are archived rather than deleted, so historical flights and reservations stay intact.
+- Operations console (`/manage/`) for airlines, airports, aircraft, flights, and reservations. Reference data and flights are archived rather than deleted, so historical flights and reservations stay intact; the menus and confirmations say "Archive" and explain what archiving does. Only reservations can be deleted permanently, and that confirmation says so.
 - Approve or cancel reservations from the console; approvals and rejections notify the passenger.
-- Django admin (`/admin/`) with an upcoming-flights occupancy dashboard, a reservation approval screen, and recurring flight schedules that generate dated flights.
+- Django admin (`/admin/`) with an upcoming-flights occupancy dashboard, a reservation approval screen, and recurring flight schedules that generate dated flights. The two custom screens keep the console navigation, and the navigation shows the Upcoming Flights link only to staff accounts that can open it.
 
 ### Travel assistant and tracking
 
 - The assistant answers in English, Spanish, French, German, Japanese, or Hindi. Without a provider key it uses a deterministic local responder backed by a curated destination guide. With a key it calls OpenRouter, Groq, Hugging Face, or OpenAI, and the model may call read-only ARMS tools (flight search, flight details, fare breakdown).
 - Booking references typed into chat are never sent to a model; the user is directed to the verified guest lookup instead.
-- The flight tracker queries AviationStack when configured, falls back to OpenSky Network, and finally to the ARMS schedule.
+- The flight tracker queries AviationStack when configured, falls back to OpenSky Network, and finally to the ARMS schedule. The OpenSky worldwide state feed is cached for 15 seconds and shared by all lookups; when it cannot be reached, ARMS waits 60 seconds before trying again instead of making every visitor wait for the timeout.
+- A small round AI Travel Agent button sits in the bottom-right corner on browsing pages. Its name appears on hover or keyboard focus. It hides itself while it would cover a link, button, or form field and returns once the area is clear, so it never blocks a control. Visitors can hide it with its close button; that choice is stored in the browser's `localStorage` and the agent stays reachable from the navigation menu and footer. The button is not shown on sign-in, registration, password recovery, seat selection, passenger details, the chat page itself, the operations console, Django admin, or to administrators.
 
 ## Technology
 
@@ -162,9 +165,11 @@ flowchart TD
 - Status and category fields use `TextChoices`.
 - Airlines, airports, and aircraft must have unique codes (and airlines and airports unique names) among non-archived records, enforced with conditional `UniqueConstraint`s. Archived codes can be reused.
 - A flight must arrive after it departs and must connect two different airports (`CheckConstraint`s).
+- A booking reference identifies one submission. It is indexed but not unique, because every traveller booked together shares it.
 - A seat can be held by only one pending or approved reservation per flight (conditional `UniqueConstraint`). The booking service also locks the flight row inside a transaction and re-checks availability, and a constraint violation from a concurrent request becomes a 409 response.
 - Reference data and flights use `on_delete=PROTECT`, so records with history cannot be deleted by accident; the console archives them instead.
 - Seat availability is calculated in a single annotated query (`with_seat_availability`) instead of one query per flight.
+- Flights have a composite index on origin, destination, and departure plus an index on departure. Date filters use `departing_on` and `departing_between`, which compare `departure` with the start and end of the local day instead of casting it to a date, so these indexes can be used. Measured pages issue between 0 and 10 queries, and the counts do not grow with the number of rows.
 
 ### Frontend
 
@@ -172,6 +177,12 @@ flowchart TD
 - `arms.js` provides `armsPostForm`, `armsPostAction`, and `armsErrorMessage`, so every AJAX form shows the server's validation message instead of a generic alert. CSRF tokens are read from the form, the `csrf-token` meta tag, or the `csrftoken` cookie, following Django's documented AJAX approach.
 - JSON endpoints answer `{"status": "success" | "failed", "msg": ...}` with meaningful HTTP status codes (400, 401, 403, 404, 405, 409, 429). The assistant API uses `message` instead of `msg`.
 - The seat map is rendered from the server's own seat list (`json_script`), so the codes a passenger clicks are exactly the codes the server validates.
+- Validation messages name the field by its label, for example "User ID: User with this User ID already exists." Form-wide errors appear as plain sentences.
+- Success and information messages fade after five seconds. Error and warning messages stay until dismissed and are announced to screen readers (`role="alert"`).
+- Every form control has an associated label, and form fields carry `autocomplete` hints so browsers can fill names, email, phone, and passwords.
+- Font Awesome is loaded as a stylesheet only. The previous page also loaded Font Awesome's 1.7 MB JavaScript build in the document head, which blocked rendering and duplicated the stylesheet.
+- `arms.css` removes background images globally to keep the flat dark theme. Bootstrap's dropdown arrows and close buttons are drawn with background images, so they are exempt and recoloured for the dark theme. The unused `wallpaper.jpg` was removed because that rule always hid it.
+- `templates/404.html` and `templates/500.html` give branded error pages with a way back to search and the home page.
 
 ## Domain model
 
@@ -316,6 +327,7 @@ Environment variables (all optional in development; empty values count as unset)
 | `DJANGO_ADMINS` | Comma-separated addresses that receive server error emails. |
 | `DJANGO_LOG_LEVEL`, `ARMS_LOG_LEVEL` | Log levels for Django and for the `apps` package. Default `INFO`. |
 | `SITE_URL` | Public URL sent to OpenRouter as the HTTP referer. |
+| `BOOKING_HORIZON_DAYS` | How many days ahead flights can be searched and automatically scheduled. Default `365`. |
 | `AVIATIONSTACK_API_KEY` | Enables AviationStack live flight lookups. |
 | `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `HUGGINGFACE_API_KEY`, `OPENAI_API_KEY` | Server-wide LLM provider keys. The first configured one is used in automatic mode. |
 | `AI_API_KEY` | Generic fallback key; the provider is inferred from the key prefix. |
@@ -368,7 +380,69 @@ black --check . && isort --check-only . && flake8 .
 pre-commit install
 ```
 
-The suite contains 146 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
+The suite contains 165 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
+
+## Usability study
+
+### What the research says
+
+The Nielsen Norman Group (NN/g) site could not be opened from the build environment, so the points below come from NN/g pages as indexed by a search engine and should be checked against the pages themselves.
+
+- Jakob Nielsen's article [Why You Only Need to Test with 5 Users](https://www.nngroup.com/articles/why-you-only-need-to-test-with-5-users/) argues that several small tests beat one large test. Each extra participant mostly repeats problems already seen, following the Nielsen and Landauer model `found = N(1 - (1 - L)^n)`, where `L` is the share of problems one participant reveals. The often-quoted "five users find about 85% of problems" assumes an average `L` of about 31%; that figure was confirmed only in secondary sources. When `L` is lower, more participants are needed.
+- [How Many Test Users in a Usability Study?](https://www.nngroup.com/articles/how-many-test-users/) recommends five participants per round for most qualitative tests, and three to four per group when the product serves several distinct user groups.
+- [Why 5 Participants Are Okay in a Qualitative Study, but Not in a Quantitative One](https://www.nngroup.com/articles/5-test-users-qual-quant/) limits the rule to finding problems. Benchmarks and statistics need larger samples.
+- [Usability Metrics](https://www.nngroup.com/articles/usability-metrics/) names success rate, time on task, error rate, and satisfaction as the core measures, and [User Satisfaction vs. Performance Metrics](https://www.nngroup.com/articles/satisfaction-vs-performance-metrics/) recommends collecting satisfaction and performance together.
+- The [10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) include visibility of system status (#1), error prevention (#5), and helping users recognize, diagnose, and recover from errors (#9). Most fixes below fall under these three.
+
+### Method
+
+No real participants were recruited. Instead, five scripted personas drove a real browser (Playwright and Chromium) through the running Docker stack with PostgreSQL and seeded data. Each persona made one realistic mistake to test error handling.
+
+| Persona | Device | Tasks | Deliberate mistake |
+| --- | --- | --- | --- |
+| Guest booker | Desktop, 1440 px | Book two seats as a guest; find the booking later and cancel it | Picks the same airport twice; verifies with a first name instead of a surname |
+| New passenger | Laptop, 1280 px | Register; sign in; book one seat; cancel it | Mistypes the password confirmation |
+| Returning passenger | Laptop, 1366 px | Recover a forgotten password; turn on two-factor sign-in and use it | Misspells the security answer |
+| Operations administrator | Desktop, 1440 px | Add an airline; archive it; approve a pending reservation; check upcoming departures | Reuses an existing airline code |
+| Phone user | iPhone 13 emulation, 390 px | Book one seat as a guest; ask the AI agent; track a flight | None |
+
+For every task the harness recorded success, clicks against the shortest known path, the pages visited, the elapsed time, form fields typed, and HTTP errors. On every page it also checked JavaScript errors, server errors, horizontal overflow, controls covered by the floating button, form controls without labels, tap targets smaller than 24 by 24 CSS pixels on the phone, and images without alternative text.
+
+What simulated personas cannot tell you: satisfaction, real time on task, confusion that does not cause a failure, or whether the wording makes sense to travellers. Treat the results as a pre-test that removed mechanical problems before a real study.
+
+### Results
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Task success | 15 of 15 | 15 of 15 |
+| Clicks, all tasks (shortest path 76) | 80 | 80 |
+| Mistakes that got a specific, lasting explanation | 1 of 5 | 5 of 5 |
+| Friction points | 11 | 1 |
+| JavaScript errors, server errors | 0, 0 | 0, 0 |
+| Page types where the floating button covered a control | 6 | 0 |
+| Page types showing the floating button | 21 | 9 |
+| Page types with unlabeled form controls | 3 | 0 |
+| Phone tap targets under 24 px | 1 | 0 |
+
+The "before" overlap count was taken at the top of each page only, so it is a lower bound. The "after" count was checked at the top, middle, and bottom of every page, and again on a phone by scrolling each page in 40-pixel steps (about 210 positions across five pages). Times are machine times that include deliberate pauses in the script, so they are not reported as human time on task.
+
+Every task already succeeded and paths were close to the shortest, so the work went into what happens around mistakes:
+
+| Mistake | Before | After |
+| --- | --- | --- |
+| Same airport for origin and destination | Results page said "No flights found", and returning to search lost every input | Explained in the form before submitting; inputs kept |
+| Wrong verifier in guest lookup | Generic message that disappeared after 3.5 seconds | Specific guidance that stays until dismissed |
+| Wrong security answer | Message disappeared, date of birth cleared | Message stays, date of birth kept |
+| Existing airline code | "[__all__] Airline code already exists" | "Airline code already exists." |
+| Password confirmation typo | "Passwords do not match." | Unchanged; already clear |
+
+Other friction removed: a two-traveller guest booking produced two different references and its confirmation showed only one traveller; the sign-in page was titled "Passenger Login" although administrators use it; the date pickers allowed past dates; the console said "Delete" for an action that archives; the admin Upcoming Flights page lost the console navigation; the passenger form promised a confirmation email that is never sent; error and success messages both vanished after 3.5 seconds; the alert close buttons and dropdown arrows rendered blank because of a global CSS rule; and flight cards overlapped at tablet widths and broke airport names mid-word on phones.
+
+One friction point is left on purpose: a signed-in passenger must re-enter the account password and solve an arithmetic check to book, while a guest does not. This is a security trade-off for the product owner to decide.
+
+### Recommended next step
+
+Run a moderated study with real people: three to four participants for each of the three groups (guests, registered passengers, administrators), using the tasks above. Record task success, time on task, and errors, and ask a one-question ease rating (for example the Single Ease Question) after each task. Fix what that round finds, then run another small round.
 
 ## Engineering conventions
 
@@ -385,9 +459,11 @@ The suite contains 146 tests across all apps and runs against SQLite with the te
 - Every view requires authentication unless it is explicitly public, and every state change requires POST with a CSRF token. Logout is POST-only.
 - Passwords, security answers, and one-time passcodes are stored as Django password hashes. Passcodes are emailed and are never written to logs.
 - Login redirects only follow `next` URLs on the same host.
-- Rate limits (guest lookup and cancellation, assistant messages) use Django's cache keyed by `REMOTE_ADDR`. The default local-memory cache is per process; configure a shared cache such as Redis or the database cache before relying on these limits across multiple workers. Behind a proxy, `REMOTE_ADDR` may be the proxy's address.
+- Rate limits (guest lookup and cancellation, reservation submission at 20 per ten minutes, assistant messages) use Django's cache keyed by `REMOTE_ADDR`. The default local-memory cache is per process; configure a shared cache such as Redis or the database cache before relying on these limits across multiple workers. Behind a proxy, `REMOTE_ADDR` may be the proxy's address.
 - Reservation verification throttling is stored in the session, not per account.
-- Searching an empty future date on a route automatically creates three placeholder departures for that day, so demo searches always return bookable flights. Remove the `RouteProvisioner` call from `FlightResultsView` if real inventory should be shown only.
+- Searching an empty future date on a route automatically creates three placeholder departures for that day, so demo searches always return bookable flights. This only happens inside the booking window (`BOOKING_HORIZON_DAYS`), so crawlers cannot create flights for arbitrary future dates. Remove the `RouteProvisioner` call from `FlightResultsView` if real inventory should be shown only.
+- If a two-factor code cannot be emailed, sign-in stops with a clear message (HTTP 503) instead of sending the user to a code page that will never receive a code.
+- The AviationStack endpoint is called over plain HTTP, so the API key travels unencrypted. Switch `AviationStackProvider.endpoint` to HTTPS if your AviationStack plan supports it.
 - External flight data and LLM answers depend on third-party availability. Terms of Service and Privacy Policy pages are drafts that need operator and legal review.
 - Run `python manage.py check --deploy` with production settings before going live.
 
@@ -410,3 +486,12 @@ The codebase was restructured from a single `armsApp` application into the apps 
   - Reservation approval and rejection in Django admin used GET links; they now use POST forms.
   - The `CA988` sample flight arrived before it departed in ARMS's single time zone; its arrival is now 11 hours 40 minutes after departure.
 - Behavior changes: two-factor codes are emailed instead of logged; superusers are administrators; `generate_recurring_flights --clear` no longer deletes flights that have reservations; the dashboard's always-empty "recent searches" table and placeholder "view all notifications" button were removed.
+
+### UX and engineering pass
+
+- Two additive migrations: `bookings.0002_shared_booking_reference` drops the unique constraint on `booking_reference` and indexes it, and `flights.0002_flight_search_indexes` adds the flight search indexes. Existing data keeps working; reservations made earlier keep their own references.
+- New setting `BOOKING_HORIZON_DAYS` (default 365).
+- Guest cancellation now cancels every traveller on the booking.
+- The AI Travel Agent button was redesigned as described in [Travel assistant and tracking](#travel-assistant-and-tracking).
+- The 1.7 MB Font Awesome JavaScript file is no longer loaded, and the 997 KB `wallpaper.jpg`, which a global CSS rule always hid, was removed. `arms.css` had also referenced it through a Django template tag, which a static CSS file cannot use.
+- Engineering fixes: reservation submissions are rate limited; OpenSky responses are cached; automatic flight creation is limited to the booking window; date filters can use indexes; the approval screen counts statuses in one query instead of four.

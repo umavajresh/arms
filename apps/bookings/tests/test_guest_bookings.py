@@ -28,6 +28,69 @@ class GuestBookingTests(TestCase):
             {"reference": reference, "verification": verification},
         )
 
+    def submit_group(self, travellers):
+        seats = [
+            {"seat": "E1%s" % letter, "class": "economy"}
+            for letter in "ABCDEF"[: len(travellers)]
+        ]
+        self.client.post(
+            reverse("bookings:seat-selection", args=[self.flight.pk]),
+            {
+                "selected_seats": json.dumps(
+                    {"passenger_count": len(travellers), "seats": seats}
+                )
+            },
+        )
+        data = {
+            "flight": str(self.flight.pk),
+            "passenger_count": str(len(travellers)),
+            "email": "family@example.com",
+            "contact": "555-1234",
+            "is_guest": "1",
+        }
+        for index, ((first, last), seat) in enumerate(zip(travellers, seats)):
+            data.update(
+                {
+                    "passenger_%d-first_name" % index: first,
+                    "passenger_%d-last_name" % index: last,
+                    "passenger_%d-gender" % index: "Female",
+                    "passenger_%d_seat" % index: seat["seat"],
+                    "passenger_%d_class" % index: "economy",
+                }
+            )
+        return self.client.post(reverse("bookings:submit"), data).json()
+
+    def test_group_booking_shares_one_reference(self):
+        data = self.submit_group([("Priya", "Raman"), ("Kiran", "Rao")])
+        booking = Reservation.objects.filter(
+            booking_reference=data["booking_reference"]
+        )
+        self.assertEqual(booking.count(), 2)
+        confirmation = self.client.get(data["redirect"])
+        self.assertContains(confirmation, "Priya")
+        self.assertContains(confirmation, "Kiran")
+
+    def test_lookup_by_any_traveller_lists_the_whole_booking(self):
+        data = self.submit_group([("Priya", "Raman"), ("Kiran", "Rao")])
+        response = self.lookup(data["booking_reference"], "Rao")
+        self.assertEqual(len(response.context["booking_passengers"]), 2)
+        self.assertContains(response, "2 travellers on this booking")
+
+    def test_guest_cancel_cancels_every_traveller(self):
+        data = self.submit_group([("Priya", "Raman"), ("Kiran", "Rao")])
+        response = self.client.post(
+            reverse("bookings:guest-cancel"),
+            {"reference": data["booking_reference"], "verification": "raman"},
+        )
+        self.assertEqual(response.json()["status"], "success")
+        self.assertIn("2 travellers", response.json()["msg"])
+        statuses = set(
+            Reservation.objects.filter(
+                booking_reference=data["booking_reference"]
+            ).values_list("status", flat=True)
+        )
+        self.assertEqual(statuses, {Reservation.Status.CANCELLED})
+
     def test_guest_can_book_and_view_confirmation(self):
         self.client.post(
             reverse("bookings:seat-selection", args=[self.flight.pk]),
@@ -79,7 +142,7 @@ class GuestBookingTests(TestCase):
     def test_guest_lookup_rejects_wrong_passenger(self):
         reservation = self.guest_reservation()
         response = self.lookup(reservation.booking_reference, "wrong@example.com")
-        self.assertContains(response, "No reservation found matching")
+        self.assertContains(response, "No booking matches that reference")
 
     def test_confirmation_requires_verified_session(self):
         reservation = self.guest_reservation(first_name="Taylor", last_name="Guest")

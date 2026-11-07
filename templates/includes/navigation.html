@@ -13,7 +13,9 @@
             <li class="nav-item"><a class="nav-link" href="{% url 'console:airport-list' %}">Airport</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'console:aircraft-list' %}">Aircraft</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'console:flight-list' %}">Flight</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'admin:flights_flight_upcoming' %}">Upcoming Flights</a></li>
+            {% if request.user.is_staff %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'admin:flights_flight_upcoming' %}">Upcoming Flights</a></li>
+            {% endif %}
             <li class="nav-item"><a class="nav-link" href="{% url 'console:reservation-list' %}">Reservation</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'tracking:tracker' %}">Flight Radar</a></li>
           {% elif request.user.is_authenticated %}

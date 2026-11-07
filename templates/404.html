@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block pageContent %}
+<section class="py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8 col-12 text-center">
+      <p class="text-uppercase small text-muted mb-2">Error 404</p>
+      <h1 class="h3 fw-bold mb-3">We could not find that page</h1>
+      <p class="text-muted mb-4">The link may be out of date, or the page may have moved. You can start a new search or go back to the home page.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a href="{% url 'flights:search' %}" class="btn btn-gold rounded-0 px-4">Search flights</a>
+        <a href="{% url 'pages:landing' %}" class="btn btn-outline-light rounded-0 px-4">Go to home page</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock pageContent %}

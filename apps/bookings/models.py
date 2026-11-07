@@ -54,7 +54,7 @@ class Reservation(models.Model):
     contact = models.CharField(max_length=250)
     address = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=Status, default=Status.PENDING)
-    booking_reference = models.CharField(max_length=32, unique=True, editable=False)
+    booking_reference = models.CharField(max_length=32, db_index=True, editable=False)
     is_guest = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

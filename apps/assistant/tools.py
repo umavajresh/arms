@@ -238,16 +238,18 @@ class ReservationLookupTool(TravelTool):
         email, last_name = email.strip().casefold(), last_name.strip().casefold()
         if not email or len(email) > 254 or not last_name or len(last_name) > 150:
             raise ToolInputError("Booking reference, email, and surname are required.")
-        reservation = (
-            Reservation.objects.with_flight()
-            .filter(booking_reference=reference.strip().upper())
-            .first()
+        reservation = next(
+            (
+                candidate
+                for candidate in Reservation.objects.with_flight().filter(
+                    booking_reference=reference.strip().upper()
+                )
+                if candidate.email.casefold() == email
+                and candidate.last_name.casefold() == last_name
+            ),
+            None,
         )
-        if (
-            reservation is None
-            or reservation.email.casefold() != email
-            or reservation.last_name.casefold() != last_name
-        ):
+        if reservation is None:
             raise ToolInputError("Invalid booking reference or passenger verification.")
         flight = reservation.flight
         return {

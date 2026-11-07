@@ -13,7 +13,7 @@ from apps.notifications.models import Notification
 from .forms import GuestLookupForm
 from .guest_access import (
     GuestAccess,
-    find_guest_reservation,
+    find_guest_booking,
     is_valid_guest_request,
     normalize_reference,
     normalize_verifier,
@@ -28,9 +28,12 @@ from .verification import ReservationVerifier, VerificationFailed, VerificationL
 
 guest_lookup_limiter = RateLimiter("guest-lookup", limit=5, window_seconds=600)
 guest_cancel_limiter = RateLimiter("guest-cancel", limit=5, window_seconds=600)
+submission_limiter = RateLimiter("reservation-submit", limit=20, window_seconds=600)
 
 
 class BookableFlightMixin:
+    assistant_launcher = False
+
     def dispatch(self, request, *args, **kwargs):
         self.flight = get_object_or_404(
             with_seat_availability(Flight.objects.unarchived().with_route()),
@@ -118,8 +121,15 @@ class ReservationFormView(
         context["reservation_payload"] = {
             "passenger_count": self.selection.passenger_count,
             "selected_seats": seats,
+            "primary_traveller": self.primary_traveller(),
         }
         return context
+
+    def primary_traveller(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return None
+        return {"first_name": user.first_name, "last_name": user.last_name}
 
 
 class HumanCheckView(TemplateView):
@@ -158,6 +168,11 @@ class ReservationSubmitView(View):
     http_method_names = ["post"]
 
     def post(self, request, *args, **kwargs):
+        if submission_limiter.is_limited(request):
+            return json_failure(
+                "Too many booking attempts. Please wait 10 minutes and try again.",
+                http_status=429,
+            )
         is_guest = not request.user.is_authenticated
         if is_guest and request.POST.get("is_guest") != "1":
             return json_failure(
@@ -275,17 +290,19 @@ class GuestLookupView(PageMixin, TemplateView):
                 "or last name.",
             )
             return self.render_to_response(context)
-        reservation = find_guest_reservation(reference, verifier)
-        if reservation is None:
+        booking = find_guest_booking(reference, verifier)
+        if not booking:
             messages.error(
                 request,
-                "No reservation found matching the provided reference "
-                "and passenger verification.",
+                "No booking matches that reference and passenger. Check the "
+                "reference on your confirmation and enter the email or surname "
+                "of any traveller on the booking.",
             )
             return self.render_to_response(context)
         GuestAccess(request.session).grant(reference)
-        context["found_reservation"] = reservation
-        context["can_cancel"] = reservation.can_cancel
+        context["found_reservation"] = booking[0]
+        context["booking_passengers"] = booking
+        context["can_cancel"] = any(reservation.can_cancel for reservation in booking)
         return self.render_to_response(context)
 
 
@@ -306,20 +323,23 @@ class GuestCancelView(View):
             return json_failure("Missing required verification details.")
         if not Reservation.objects.filter(booking_reference=reference).exists():
             return json_failure("Reservation not found.", http_status=404)
-        reservation = find_guest_reservation(reference, verifier)
-        if reservation is None:
+        booking = find_guest_booking(reference, verifier)
+        if not booking:
             return json_failure(
                 "Verification failed. Passenger details do not match.",
                 http_status=403,
             )
         try:
-            ReservationService().cancel(reservation)
+            cancelled = ReservationService().cancel_booking(booking)
         except ReservationRejected as error:
             return json_failure(error.message)
-        messages.success(
-            request, "Reservation %s has been successfully cancelled." % reference
+        message = "Booking %s has been successfully cancelled for %d traveller%s." % (
+            reference,
+            len(cancelled),
+            "" if len(cancelled) == 1 else "s",
         )
-        return json_success("Reservation successfully cancelled.")
+        messages.success(request, message)
+        return json_success(message)
 
 
 class PassengerDashboardView(PassengerAreaMixin, PageMixin, TemplateView):

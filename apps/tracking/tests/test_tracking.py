@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
+from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -42,6 +43,10 @@ OPENSKY_STATE = [None, "BAW123", None, None, None, -0.45, 51.47, 6500.0, None, 5
 
 
 class LiveFlightLookupTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
     @override_settings(ARMS_AVIATIONSTACK_API_KEY="demo-key")
     @patch("apps.tracking.providers.requests.get")
     def test_aviationstack_is_used_when_configured(self, get):
@@ -62,6 +67,14 @@ class LiveFlightLookupTests(SimpleTestCase):
         self.assertEqual(result["longitude"], -0.45)
         get.assert_called_once()
 
+    @override_settings(ARMS_AVIATIONSTACK_API_KEY="")
+    @patch("apps.tracking.providers.requests.get")
+    def test_opensky_states_are_reused_between_lookups(self, get):
+        get.return_value = provider_response({"states": [OPENSKY_STATE]})
+        LiveFlightLookup().find("BAW123")
+        self.assertIsNone(LiveFlightLookup().find("NOPE1"))
+        get.assert_called_once()
+
 
 class ScheduleProgressTests(SimpleTestCase):
     def test_phases_follow_the_schedule(self):
@@ -79,6 +92,10 @@ class ScheduleProgressTests(SimpleTestCase):
 
 @override_settings(ARMS_AVIATIONSTACK_API_KEY="")
 class TrackingViewTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
     def test_tracker_page_lists_recent_flights(self):
         make_flight(code="TRK1", departs_in=timedelta(days=1))
         self.assertContains(self.client.get(reverse("tracking:tracker")), "TRK1")

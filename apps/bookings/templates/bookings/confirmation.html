@@ -57,8 +57,8 @@
                     <div class="p-3 mb-4 rounded-0 border" style="background-color: #16202c; border-color: var(--arms-border, #263345) !important;">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
-                                <span class="small text-muted">Reservation Status:</span>
-                                <span class="fw-bold ms-2" style="color: var(--arms-gold, #c5a880);">{{ reservation.status_label }}</span>
+                                <span class="small text-muted">Contact:</span>
+                                <span class="fw-semibold ms-2 text-light">{{ reservation.email }}</span>
                             </div>
                             <div class="small text-muted">
                                 Recorded on {{ reservation.created_at|date:"F d, Y at H:i" }}
@@ -100,7 +100,7 @@
                                         <th>Gender</th>
                                         <th>Seat Assigned</th>
                                         <th>Travel Class</th>
-                                        <th>Contact Email</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,7 +110,7 @@
                                         <td>{{ p.gender }}</td>
                                         <td><span class="badge bg-dark border text-light px-2 py-1">{{ p.seat_number|default:"TBA" }}</span></td>
                                         <td>{{ p.get_cabin_display }}</td>
-                                        <td class="text-secondary">{{ p.email }}</td>
+                                        <td><span class="badge bg-{{ p.status_badge }} rounded-0">{{ p.status_label }}</span></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

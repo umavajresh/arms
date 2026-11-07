@@ -1,13 +1,9 @@
 {% extends "base.html" %}
-{% load static %}
 {% block pageContent %}
 <style>
     .hero-container {
         position: relative;
         background-color: #0b0f17;
-        background-image: linear-gradient(rgba(11, 15, 23, 0.82), rgba(11, 15, 23, 0.94)), url('{% static "img/wallpaper.jpg" %}');
-        background-position: center center;
-        background-size: cover;
         border-bottom: 1px solid var(--arms-border, #263345);
         padding: clamp(3rem, 7vw, 6rem) 0 clamp(2rem, 5vw, 4rem);
     }
@@ -123,7 +119,7 @@
                     <h2 class="h6 fw-semibold text-light mb-3">
                         <i class="fas fa-search me-2 text-secondary" aria-hidden="true"></i>Quick Flight Search
                     </h2>
-                    <form method="GET" action="{% url 'flights:results' %}">
+                    <form method="GET" action="{% url 'flights:results' %}" data-route-search>
                         <div class="row g-3 align-items-end">
                             <div class="col-lg-3 col-md-6 col-12">
                                 <label for="from_airport" class="form-label small text-muted">Origin Airport</label>
@@ -145,7 +141,7 @@
                             </div>
                             <div class="col-lg-3 col-md-6 col-12">
                                 <label for="departure_date" class="form-label small text-muted">Departure Date</label>
-                                <input type="date" class="form-control form-control-dark rounded-0" id="departure_date" name="departure_date" required>
+                                <input type="date" class="form-control form-control-dark rounded-0" id="departure_date" name="departure_date" min="{{ booking_window.earliest|date:'Y-m-d' }}" max="{{ booking_window.latest|date:'Y-m-d' }}" required>
                             </div>
                             <div class="col-lg-3 col-md-6 col-12">
                                 <button type="submit" class="btn btn-gold w-100 rounded-0 py-2">

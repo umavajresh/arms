@@ -50,7 +50,7 @@
                                         <ul class="dropdown-menu" aria-labelledby="abtn{{flight.pk}}">
                                             <li><a class="dropdown-item view-data" href="javascript:void(0)" data-url="{% url 'console:flight-detail' flight.pk %}"><i class="fa fa-eye text-dark"></i> View</a></li>
                                             <li><a class="dropdown-item edit-data" href="javascript:void(0)" data-url="{% url 'console:flight-update' flight.pk %}"><i class="fa fa-edit text-primary"></i> Edit</a></li>
-                                            <li><a class="dropdown-item delete-data" href="javascript:void(0)" data-url="{% url 'console:flight-archive' flight.pk %}"><i class="fa fa-trash text-danger"></i> Delete</a></li>
+                                            <li><a class="dropdown-item archive-data" href="javascript:void(0)" data-url="{% url 'console:flight-archive' flight.pk %}"><i class="fa fa-box-archive text-danger" aria-hidden="true"></i> Archive</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -81,8 +81,8 @@
             $('#viewer_modal #img-viewer-field').attr('src', img)
             $('#viewer_modal').modal('show')
         })
-        $('.delete-data').click(function() {
-            _conf("Are you sure to delete this flight?", 'delete_flight', ["'" + $(this).attr('data-url') + "'"])
+        $('.archive-data').click(function() {
+            _conf("Archive this flight? It will be removed from search results. Existing reservations are kept.", 'archive_flight', ["'" + $(this).attr('data-url') + "'"], 'Archive')
         })
         $('#flight-tbl').find('td, th').addClass('px-2 py-1 align-middle')
         $('#flight-tbl').DataTable({
@@ -97,7 +97,7 @@
         })
     })
 
-    function delete_flight(url) {
+    function archive_flight(url) {
         armsPostAction(url);
     }
 </script>

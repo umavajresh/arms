@@ -6,6 +6,8 @@ from django.utils import timezone
 
 from apps.flights.models import Aircraft, Airline, Flight
 
+from .window import BookingWindow
+
 DOMESTIC_COUNTRY = "India"
 PREFERRED_AIRCRAFT_CODES = ("A320", "B738", "A21N")
 DEFAULT_BUSINESS_SLOTS = 12
@@ -39,7 +41,7 @@ class RouteProvisioner:
         self.slots = slots
 
     def ensure_departures(self, origin, destination, day):
-        if origin.pk == destination.pk or day < timezone.localdate():
+        if origin.pk == destination.pk or day not in BookingWindow.current():
             return 0
         existing = Flight.objects.unarchived().on_route(origin, destination)
         if existing.departing_on(day).exists():

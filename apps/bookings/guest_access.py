@@ -30,13 +30,15 @@ def passenger_matches(reservation, verifier):
     ) or constant_time_compare(reservation.last_name.casefold(), verifier)
 
 
-def find_guest_reservation(reference, verifier):
-    reservation = (
-        Reservation.objects.with_flight().filter(booking_reference=reference).first()
+def find_guest_booking(reference, verifier):
+    booking = list(
+        Reservation.objects.with_flight()
+        .filter(booking_reference=reference, is_guest=True)
+        .order_by("pk")
     )
-    if reservation is not None and passenger_matches(reservation, verifier):
-        return reservation
-    return None
+    if any(passenger_matches(reservation, verifier) for reservation in booking):
+        return booking
+    return []
 
 
 class GuestAccess:

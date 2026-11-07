@@ -1,4 +1,6 @@
 import re
+import smtplib
+from unittest.mock import patch
 
 from django.core import mail
 from django.test import Client, TestCase
@@ -115,7 +117,9 @@ class RegistrationTests(TestCase):
             reverse("accounts:register"), self.registration_data()
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("member_id", response.json()["msg"])
+        self.assertEqual(
+            response.json()["msg"], "User ID: User with this User ID already exists."
+        )
 
 
 class TwoFactorTests(TestCase):
@@ -145,6 +149,19 @@ class TwoFactorTests(TestCase):
         self.assertEqual(len(code), 6)
         self.user.refresh_from_db()
         self.assertNotEqual(self.user.otp_digest, code)
+
+    @patch(
+        "apps.accounts.services.two_factor.send_mail",
+        side_effect=smtplib.SMTPException,
+    )
+    def test_undeliverable_code_is_reported_at_sign_in(self, send_mail):
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "twofa_user", "password": DEFAULT_PASSWORD},
+        )
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("could not email your verification code", response.json()["msg"])
+        self.assertNotIn("two_factor_user_id", self.client.session)
 
     def test_valid_code_signs_in(self):
         _, code = self.start_challenge()

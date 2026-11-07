@@ -16,7 +16,7 @@
   <div class="col-lg-4 col-md-6 col-sm-12">
     <div class="card card-default rounded-0">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title mb-0"><b>Passenger Login</b></h4>
+        <h4 class="card-title mb-0"><b>Sign In</b></h4>
         <span class="badge bg-dark border text-light rounded-0">ARMS 2.0</span>
       </div>
       <div class="card-body">
@@ -25,17 +25,17 @@
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
             <div class="form-group mb-3">
-              <label for="username" class="control-label">User ID</label>
-              <input type="text" class="form-control rounded-0" autofocus name="username" id="username" required placeholder="Enter your User ID or Username">
+              <label for="username" class="control-label">User ID or Username</label>
+              <input type="text" class="form-control rounded-0" autofocus name="username" id="username" autocomplete="username" required placeholder="Enter your User ID or Username">
             </div>
             <div class="form-group mb-3">
               <label for="password" class="control-label">Password</label>
-              <input type="password" class="form-control rounded-0" name="password" id="password" required>
+              <input type="password" class="form-control rounded-0" name="password" id="password" autocomplete="current-password" required>
             </div>
             <div class="form-group mb-3">
               <div class="d-flex w-100 justify-content-between align-items-center">
                 <a href="{% url 'pages:landing' %}">Go Back</a>
-                <button class="btn btn-sm rounded-0 btn-primary">Login</button>
+                <button class="btn btn-sm rounded-0 btn-primary">Sign In</button>
               </div>
             </div>
             <div class="form-group mb-0">

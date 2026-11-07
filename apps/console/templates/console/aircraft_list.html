@@ -51,7 +51,7 @@
                         </td>
                         <td class="py-1 text-center">
                             <button class="btn btn-sm btn-info edit-data" type="button" data-url="{% url 'console:aircraft-update' aircraft.pk %}" title="Edit"><i class="fa fa-edit"></i></button>
-                            <button class="btn btn-sm btn-danger delete-data" type="button" data-url="{% url 'console:aircraft-archive' aircraft.pk %}" title="Delete"><i class="fa fa-trash"></i></button>
+                            <button class="btn btn-sm btn-danger archive-data" type="button" data-url="{% url 'console:aircraft-archive' aircraft.pk %}" title="Archive" aria-label="Archive"><i class="fa fa-box-archive" aria-hidden="true"></i></button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -65,8 +65,8 @@
 {% block ScriptBlock %}
 <script>
     $(function() {
-        $('.delete-data').click(function() {
-            _conf("Are you sure to delete this aircraft?", 'delete_aircraft', ["'" + $(this).attr('data-url') + "'"])
+        $('.archive-data').click(function() {
+            _conf("Archive this aircraft? It can no longer be assigned to new flights. Existing records are kept.", 'archive_aircraft', ["'" + $(this).attr('data-url') + "'"], 'Archive')
         })
         $('#create_new').click(function() {
             uni_modal("<i class='fa fa-plus'></i> Add New Aircraft", "{% url 'console:aircraft-create' %}")
@@ -77,7 +77,7 @@
         $('.table').dataTable();
     })
 
-    function delete_aircraft(url) {
+    function archive_aircraft(url) {
         armsPostAction(url);
     }
 </script>

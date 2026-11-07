@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="{% static 'vendor/datatables/datatables.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/select2/css/select2.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/arms.css' %}">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/js/all.min.js" integrity="sha512-6PM0qYu5KExuNcKt5bURAoT6KCThUmHRewN3zUFNaoI6Di7XJPTMoT6K0nsagZKk2OB4L7E3q1uQKHNHd4stIQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="{% static 'vendor/jquery/jquery-3.6.0.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/popper.min.js' %}"></script>
   <script src="{% static 'vendor/datatables/datatables.min.js' %}"></script>
@@ -21,7 +20,7 @@
   <script src="{% static 'js/arms.js' %}"></script>
   {% block headerContent %}{% endblock headerContent %}
 </head>
-<body>
+<body{% if assistant_launcher %} class="has-launcher{% if footer %} has-footer{% endif %}"{% endif %}>
   {% if topbar %}
     {% include "includes/navigation.html" %}
   {% endif %}
@@ -31,7 +30,7 @@
         <div class="row">
           <div class="col-12">
             {% for message in messages %}
-              <div class="alert alert-{{ message.level_tag }} w-100 rounded-0 mb-2 redirect-msg">
+              <div class="alert alert-{{ message.level_tag }} w-100 rounded-0 mb-2 redirect-msg" role="{% if message.level_tag == 'danger' or message.level_tag == 'warning' %}alert{% else %}status{% endif %}">
                 <div class="d-flex w-100">
                   <div class="col-auto flex-shrink-1 flex-grow-1">{{ message }}</div>
                   <div class="col-auto text-center">
@@ -90,10 +89,17 @@
     </footer>
   {% endif %}
 
-  <a class="ai-travel-launcher" href="{% url 'assistant:chat' %}" aria-label="Open AI Travel Agent">
-    <i class="fas fa-robot" aria-hidden="true"></i>
-    <span>AI Travel Agent</span>
-  </a>
+  {% if assistant_launcher %}
+    <div class="ai-launcher" id="ai-launcher">
+      <a class="ai-launcher-button" href="{% url 'assistant:chat' %}" aria-label="Open AI Travel Agent">
+        <i class="fas fa-robot" aria-hidden="true"></i>
+      </a>
+      <span class="ai-launcher-label" aria-hidden="true">AI Travel Agent</span>
+      <button type="button" class="ai-launcher-dismiss" id="ai-launcher-dismiss" aria-label="Hide the AI Travel Agent button" title="Hide. The AI Travel Agent stays in the menu.">
+        <i class="fas fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+  {% endif %}
 
   <div class="modal fade" id="uni_modal" role="dialog">
     <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable" role="document">

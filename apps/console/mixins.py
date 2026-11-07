@@ -7,7 +7,7 @@ from apps.core.mixins import AdministratorRequiredMixin, PageMixin
 
 
 class ConsoleMixin(AdministratorRequiredMixin, PageMixin):
-    pass
+    assistant_launcher = False
 
 
 class ModalFormMixin(ConsoleMixin):

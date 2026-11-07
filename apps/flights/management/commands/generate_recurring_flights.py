@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.flights.models import Flight, FlightSchedule
+from apps.flights.querysets import start_of_day
 from apps.flights.services.schedules import (
     ScheduleFlightGenerator,
     TemplateFlightCloner,
@@ -59,7 +60,7 @@ class Command(BaseCommand):
 
     def clear_future_flights(self, today):
         future = Flight.objects.filter(
-            departure__date__gte=today, reservations__isnull=True
+            departure__gte=start_of_day(today), reservations__isnull=True
         )
         deleted, _ = future.delete()
         self.stdout.write(self.style.WARNING("Deleted %d future flights" % deleted))
