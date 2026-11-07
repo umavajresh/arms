@@ -94,25 +94,41 @@
                         <span class="small text-muted">Booking Reference:</span>
                         <span class="fw-bold ms-1" style="color: var(--arms-gold, #c5a880);">{{ found_reservation.booking_reference }}</span>
                     </div>
-                    <div>
-                        <span class="badge bg-secondary rounded-0">{{ found_reservation.status_label }}</span>
-                    </div>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3 mb-4">
                         <div class="col-md-6 col-12">
-                            <div class="small text-muted">Passenger Name</div>
-                            <div class="fw-semibold text-light">{{ found_reservation.first_name }} {{ found_reservation.last_name }}</div>
-                            <div class="small text-muted mt-2">Contact Details</div>
-                            <div class="text-secondary small">{{ found_reservation.email }} &bull; {{ found_reservation.contact }}</div>
-                        </div>
-                        <div class="col-md-6 col-12">
                             <div class="small text-muted">Flight and Route</div>
                             <div class="fw-semibold text-light">{{ found_reservation.flight.code }} ({{ found_reservation.flight.airline.name }})</div>
                             <div class="small text-secondary">{{ found_reservation.flight.from_airport.code }} to {{ found_reservation.flight.to_airport.code }}</div>
-                            <div class="small text-muted mt-2">Seat Assignment</div>
-                            <div class="text-secondary small">{{ found_reservation.seat_number|default:"Will be assigned at check-in" }} ({{ found_reservation.get_cabin_display }})</div>
                         </div>
+                        <div class="col-md-6 col-12">
+                            <div class="small text-muted">Contact Details</div>
+                            <div class="text-secondary small">{{ found_reservation.email }} &bull; {{ found_reservation.contact }}</div>
+                        </div>
+                    </div>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-dark table-sm border mb-0" style="border-color: var(--arms-border, #263345) !important;">
+                            <caption class="small text-muted">{{ booking_passengers|length }} traveller{{ booking_passengers|length|pluralize }} on this booking</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Traveller</th>
+                                    <th scope="col">Seat</th>
+                                    <th scope="col">Class</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for passenger in booking_passengers %}
+                                <tr>
+                                    <td class="fw-semibold">{{ passenger.full_name }}</td>
+                                    <td>{{ passenger.seat_number }}</td>
+                                    <td>{{ passenger.get_cabin_display }}</td>
+                                    <td><span class="badge bg-{{ passenger.status_badge }} rounded-0">{{ passenger.status_label }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="p-3 mb-4 border rounded-0" style="background-color: #0b0f17; border-color: var(--arms-border, #263345) !important;">
@@ -135,7 +151,7 @@
 
                         {% if can_cancel %}
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-0" id="cancelGuestBtn">
-                            Cancel Reservation
+                            Cancel Booking
                         </button>
                         {% else %}
                         <span class="small text-muted">{{ found_reservation.cancellation_status }}</span>
@@ -148,14 +164,13 @@
             <script>
               $(function () {
                 $('#cancelGuestBtn').on('click', function () {
-                  if (!confirm('Are you sure you want to cancel this reservation? This action cannot be undone.')) {
+                  if (!confirm('Cancel this booking for all {{ booking_passengers|length }} traveller{{ booking_passengers|length|pluralize }}? This cannot be undone.')) {
                     return;
                   }
                   armsPostAction("{% url 'bookings:guest-cancel' %}", {
                     reference: "{{ found_reservation.booking_reference|escapejs }}",
                     verification: "{{ request.POST.verification|escapejs }}"
-                  }, function (response) {
-                    alert(response.msg);
+                  }, function () {
                     location.href = "{% url 'bookings:guest-lookup' %}";
                   });
                 });

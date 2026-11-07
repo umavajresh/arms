@@ -59,7 +59,7 @@ class TemplateFlightCloner:
             for day in _daterange(start, end):
                 departure = datetime.datetime.combine(day, departure_time)
                 code = "%s-%s" % (template.code, day.strftime("%m%d"))
-                if Flight.objects.filter(code=code, departure__date=day).exists():
+                if Flight.objects.filter(code=code).departing_on(day).exists():
                     continue
                 Flight.objects.create(
                     code=code,

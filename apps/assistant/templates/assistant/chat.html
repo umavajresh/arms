@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% block pageContent %}
 <style>
-    .ai-travel-launcher {
-        display: none;
-    }
-
     .chat-shell {
         border: 1px solid var(--arms-border, #263345);
         background: rgba(19, 25, 36, 0.95);
@@ -193,7 +189,7 @@
                         <form id="chat-form">
                             {% csrf_token %}
                             <div class="input-group">
-                                <input type="text" id="chat-message" class="form-control rounded-0" placeholder="Type a travel question, flight inquiry, or baggage rule..." autocomplete="off" required>
+                                <input type="text" id="chat-message" class="form-control rounded-0" placeholder="Type a travel question, flight inquiry, or baggage rule..." aria-label="Message the AI Travel Agent" autocomplete="off" required>
                                 <button type="submit" class="btn btn-gold rounded-0 px-4" id="chat-submit-btn">Send</button>
                             </div>
                         </form>

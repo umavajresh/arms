@@ -2,6 +2,7 @@ import logging
 
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,10 @@ class AviationStackProvider(LiveFlightProvider):
 class OpenSkyProvider(LiveFlightProvider):
     name = "opensky"
     endpoint = "https://opensky-network.org/api/states/all"
-    timeout = 15
+    timeout = 8
+    cache_key = "arms:opensky:states"
+    cache_seconds = 15
+    unavailable_cache_seconds = 60
     callsign_index = 1
     longitude_index = 5
     latitude_index = 6
@@ -85,22 +89,28 @@ class OpenSkyProvider(LiveFlightProvider):
         code = normalize_flight_code(flight_code)
         if not code:
             return None
-        try:
-            response = requests.get(
-                self.endpoint,
-                params={"time": int(timezone.now().timestamp())},
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-            states = (response.json() or {}).get("states") or []
-        except (requests.RequestException, ValueError):
-            logger.exception("OpenSky lookup failed for %s", flight_code)
-            return None
-        for state in states:
+        for state in self._states():
             match = self._parse(state, code)
             if match:
                 return match
         return None
+
+    def _states(self):
+        states = cache.get(self.cache_key)
+        if states is None:
+            states = self._download_states()
+            lifetime = self.cache_seconds if states else self.unavailable_cache_seconds
+            cache.set(self.cache_key, states, lifetime)
+        return states
+
+    def _download_states(self):
+        try:
+            response = requests.get(self.endpoint, timeout=self.timeout)
+            response.raise_for_status()
+            return (response.json() or {}).get("states") or []
+        except (requests.RequestException, ValueError):
+            logger.exception("OpenSky states download failed")
+            return []
 
     def _parse(self, state, code):
         if len(state) <= self.velocity_index:

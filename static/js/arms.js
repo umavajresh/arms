@@ -1,4 +1,68 @@
 (function ($) {
+  const LAUNCHER_DISMISSED_KEY = 'arms.assistantLauncherDismissed';
+
+  function readPreference(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writePreference(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (error) {
+      return;
+    }
+  }
+
+  if (readPreference(LAUNCHER_DISMISSED_KEY) === '1') {
+    document.documentElement.classList.add('launcher-dismissed');
+  }
+
+  const CONTROL_SELECTOR = 'a[href], button, input, select, textarea, label, [role="button"], .seat';
+
+  function launcherOutline(launcher) {
+    const box = launcher.getBoundingClientRect();
+    const centreX = box.left + box.width / 2;
+    const centreY = box.top + box.height / 2;
+    const radius = Math.min(box.width, box.height) / 2 + 4;
+    const points = [[centreX, centreY]];
+    for (let step = 0; step < 16; step += 1) {
+      const angle = (step / 16) * 2 * Math.PI;
+      points.push([centreX + radius * Math.cos(angle), centreY + radius * Math.sin(angle)]);
+    }
+    return points;
+  }
+
+  function launcherCoversControls(launcher) {
+    return launcherOutline(launcher).some(function (point) {
+      return document.elementsFromPoint(point[0], point[1]).some(function (element) {
+        return !launcher.contains(element) && element.closest(CONTROL_SELECTOR);
+      });
+    });
+  }
+
+  function keepLauncherClearOfControls(launcher) {
+    let scheduled = false;
+    function update() {
+      scheduled = false;
+      const focused = launcher.contains(document.activeElement);
+      launcher.classList.toggle('is-yielding', !focused && launcherCoversControls(launcher));
+    }
+    function schedule() {
+      if (!scheduled) {
+        scheduled = true;
+        window.requestAnimationFrame(update);
+      }
+    }
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    schedule();
+  }
+
   const loader = $('<div>')
     .attr({ id: 'pre-loader', role: 'status', 'aria-live': 'polite' })
     .text('Processing, please wait.');
@@ -45,10 +109,9 @@
   window.armsShowFormError = function (form, message) {
     const target = $(form);
     target.find('.err-msg').remove();
-    const alertBox = $('<div class="alert alert-danger err-msg">').text(message).hide();
+    const alertBox = $('<div class="alert alert-danger err-msg" role="alert">').text(message);
     target.prepend(alertBox);
-    alertBox.show('slow');
-    $('html, body, .modal').scrollTop(0);
+    alertBox[0].scrollIntoView({ block: 'nearest' });
   };
 
   window.armsPostForm = function (form, url, onSuccess) {
@@ -132,8 +195,8 @@
     });
   };
 
-  window._conf = function (message = '', handler = '', params = []) {
-    $('#confirm_modal #confirm').attr('onclick', handler + '(' + params.join(',') + ')');
+  window._conf = function (message = '', handler = '', params = [], confirmLabel = 'Continue') {
+    $('#confirm_modal #confirm').text(confirmLabel).attr('onclick', handler + '(' + params.join(',') + ')');
     $('#confirm_modal .modal-body').html(message);
     $('#confirm_modal').modal('show');
   };
@@ -159,12 +222,30 @@
     $('#zoom-minus').on('click', function () {
       applyZoom(-10);
     });
-    if ($('.redirect-msg').length) {
+    const transientMessages = $('.redirect-msg.alert-success, .redirect-msg.alert-info');
+    if (transientMessages.length) {
       setTimeout(function () {
-        $('.redirect-msg').slideUp(500, function () {
+        transientMessages.slideUp(500, function () {
           $(this).remove();
         });
-      }, 3500);
+      }, 5000);
     }
+    const launcher = document.getElementById('ai-launcher');
+    if (launcher) {
+      keepLauncherClearOfControls(launcher);
+    }
+    $('#ai-launcher-dismiss').on('click', function () {
+      writePreference(LAUNCHER_DISMISSED_KEY, '1');
+      document.documentElement.classList.add('launcher-dismissed');
+    });
+    $(document).on('submit', 'form[data-route-search]', function (event) {
+      const form = $(this);
+      const origin = form.find('[name="from_airport"]').val();
+      const destination = form.find('[name="to_airport"]').val();
+      if (origin && origin === destination) {
+        event.preventDefault();
+        armsShowFormError(this, 'Origin and destination must be different airports.');
+      }
+    });
   });
 })(jQuery);

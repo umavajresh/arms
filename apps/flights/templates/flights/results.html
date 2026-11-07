@@ -67,17 +67,9 @@
         border-color: var(--arms-gold, #c5a880) !important;
     }
     
-    .price-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: #15803d;
-        color: #ffffff;
-        padding: 5px 12px;
-        border-radius: 4px;
-        font-weight: bold;
-        font-size: 0.85rem;
-        border: 1px solid #16a34a;
+    .route-end {
+        flex: 0 1 40%;
+        min-width: 0;
     }
     
     .time-indicator {
@@ -125,26 +117,26 @@
                             <input type="hidden" name="departure_date" value="{{ departure_date }}">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Price Range</label>
+                                    <span class="form-label d-block" id="price-range-label">Price Range</span>
                                     <div class="row g-2">
                                         <div class="col">
                                             <div class="input-group">
                                                 <span class="input-group-text">₹</span>
-                                                <input type="number" class="form-control" name="min_price" id="min-price" placeholder="Min" value="{{ min_price }}">
+                                                <input type="number" class="form-control" name="min_price" id="min-price" placeholder="Min" min="0" value="{{ min_price }}" aria-label="Minimum price in rupees">
                                             </div>
                                         </div>
                                         <div class="col">
                                             <div class="input-group">
                                                 <span class="input-group-text">₹</span>
-                                                <input type="number" class="form-control" name="max_price" id="max-price" placeholder="Max" value="{{ max_price }}">
+                                                <input type="number" class="form-control" name="max_price" id="max-price" placeholder="Max" min="0" value="{{ max_price }}" aria-label="Maximum price in rupees">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Departure Time</label>
-                                    <select class="form-select" name="time_filter">
+                                    <label class="form-label" for="time-filter">Departure Time</label>
+                                    <select class="form-select" name="time_filter" id="time-filter">
                                         <option value="" {% if not time_filter %}selected{% endif %}>Any Time</option>
                                         <option value="morning" {% if time_filter == 'morning' %}selected{% endif %}>Morning (6 AM - 12 PM)</option>
                                         <option value="afternoon" {% if time_filter == 'afternoon' %}selected{% endif %}>Afternoon (12 PM - 5 PM)</option>
@@ -154,8 +146,8 @@
                                 </div>
                                 
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Sort by Price</label>
-                                    <select class="form-select" name="price_sort">
+                                    <label class="form-label" for="price-sort">Sort by Price</label>
+                                    <select class="form-select" name="price_sort" id="price-sort">
                                         <option value="" {% if not price_sort %}selected{% endif %}>Default (By Time)</option>
                                         <option value="asc" {% if price_sort == 'asc' %}selected{% endif %}>Lowest First</option>
                                         <option value="desc" {% if price_sort == 'desc' %}selected{% endif %}>Highest First</option>
@@ -215,26 +207,23 @@
                                     {% endif %}
                                     {% endwith %}
                                     
-                                    <span class="price-badge">
-                                        Economy: {{ flight.economy_price|inr }}
-                                    </span>
-                                    
                                     <div class="d-flex w-100 align-items-center">
-                                        <div class="col-auto text-center px-3">
+                                        <div class="col-auto text-center px-3 d-none d-sm-block">
                                             <img src="{% if flight.airline.logo %}{{ flight.airline.logo.url}}{% else %}{% static 'img/no-image-available.png' %}{% endif %}" alt="{{ flight.airline.name}}" class="img-thumbnail rounded-circle al-logo" style="background:#0b0f17; border-color:#263345;">
                                         </div>
                                         <div class="col-auto flex-shrink-1 flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-center pe-5">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                                                 <h4 class="m-0 h5 fw-bold text-light">Flight {{flight.code}}</h4>
                                                 <span class="badge bg-secondary border text-light">{{ flight.airline.name }}</span>
                                             </div>
                                             <hr style="border-color: #263345;">
                                             <div class="row">
-                                                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                                                <div class="col-xl-6 col-12">
                                                     <div class="d-flex align-items-center mb-2">
-                                                        <div class="text-center me-3">
+                                                        <div class="text-center me-3 route-end">
                                                             <div class="fw-bold text-light">{{ flight.departure|date:"H:i" }}</div>
-                                                            <small class="text-muted">{{ flight.from_airport.name }}</small>
+                                                            <small class="text-muted d-block d-sm-none fw-semibold">{{ flight.from_airport.code }}</small>
+                                                            <small class="text-muted d-none d-sm-block">{{ flight.from_airport.name }}</small>
                                                         </div>
                                                         <div class="flex-grow-1 text-center">
                                                             <i class="fas fa-plane text-warning" style="font-size: 1.1rem;"></i>
@@ -244,9 +233,10 @@
                                                                 {% endwith %}
                                                             </div>
                                                         </div>
-                                                        <div class="text-center ms-3">
+                                                        <div class="text-center ms-3 route-end">
                                                             <div class="fw-bold text-light">{{ flight.estimated_arrival|date:"H:i" }}</div>
-                                                            <small class="text-muted">{{ flight.to_airport.name }}</small>
+                                                            <small class="text-muted d-block d-sm-none fw-semibold">{{ flight.to_airport.code }}</small>
+                                                            <small class="text-muted d-none d-sm-block">{{ flight.to_airport.name }}</small>
                                                         </div>
                                                     </div>
                                                     
@@ -260,7 +250,7 @@
                                                     </dl>
                                                 </div>
                                                 
-                                                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                                                <div class="col-xl-6 col-12">
                                                     <div class="card mb-2 rounded-0" style="background: #0b0f17; border: 1px solid #263345;">
                                                         <div class="card-body py-2 px-3">
                                                             <div class="d-flex justify-content-between align-items-center mb-1">

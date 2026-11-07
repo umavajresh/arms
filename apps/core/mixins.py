@@ -12,6 +12,7 @@ class PageMixin:
     page_title = ""
     topbar = True
     footer = True
+    assistant_launcher = True
 
     def get_page_title(self):
         return self.page_title
@@ -21,6 +22,9 @@ class PageMixin:
         context.setdefault("page_title", self.get_page_title())
         context["topbar"] = self.topbar
         context["footer"] = self.footer
+        context["assistant_launcher"] = self.assistant_launcher and not getattr(
+            self.request.user, "is_administrator", False
+        )
         return context
 
 

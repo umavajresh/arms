@@ -29,6 +29,12 @@ class PasswordRecoveryTests(TestCase):
             {"date_of_birth": date_of_birth, "security_answer": answer},
         )
 
+    def test_wrong_answer_keeps_the_date_of_birth(self):
+        self.start("RECOVERY-TEST-USER")
+        response = self.verify("not-milo")
+        self.assertContains(response, "The details did not match.")
+        self.assertContains(response, 'value="1991-04-12"')
+
     def test_existing_and_unknown_identifiers_receive_the_same_step(self):
         for identifier in (self.user.username, "unknown-recovery-user"):
             response = self.client.post(

@@ -3,6 +3,7 @@ from django.views.generic import TemplateView
 
 from apps.core.mixins import PageMixin, public_view
 from apps.flights.models import Airport
+from apps.flights.services.window import BookingWindow
 
 
 @public_view
@@ -18,6 +19,7 @@ class LandingView(PageMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["airports"] = Airport.objects.available()
+        context["booking_window"] = BookingWindow.current()
         return context
 
 

@@ -143,7 +143,7 @@ body.loading {
     }
 }
 
-*,
+*:not(.btn-close):not(.form-select),
 *::before,
 *::after {
     box-shadow: none !important;
@@ -203,14 +203,6 @@ textarea:focus-visible {
 
 body {
     background-color: #0b0f17;
-    background-image: 
-        radial-gradient(ellipse at 50% 0%, rgba(24, 34, 48, 0.5) 0%, rgba(11, 15, 23, 0.85) 75%),
-        linear-gradient(180deg, rgba(11, 15, 23, 0.78) 0%, rgba(11, 15, 23, 0.94) 100%),
-        url('{% static "img/wallpaper.jpg" %}');
-    background-size: cover;
-    background-position: center top;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
     color: var(--arms-text, #e2e8f0);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
@@ -376,38 +368,137 @@ main {
     transition: all .2s ease-in-out;
 }
 
-.ai-travel-launcher {
+.ai-launcher {
     position: fixed;
     right: 1.25rem;
     bottom: 1.25rem;
     z-index: 1040;
+    transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
+}
+
+.ai-launcher.is-yielding {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.ai-launcher-button {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.75rem 1rem;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
     color: #0b0f17;
     background: var(--arms-gold, #c5a880);
     border: 1px solid var(--arms-gold, #c5a880);
-    border-radius: 4px;
-    font-weight: 600;
+    border-radius: 50%;
+    font-size: 1.25rem;
     text-decoration: none;
-    box-shadow: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.ai-travel-launcher:hover,
-.ai-travel-launcher:focus {
+.ai-launcher-button:hover,
+.ai-launcher-button:focus-visible {
     color: #0b0f17;
     background: var(--arms-gold-hover, #b3956e);
     border-color: var(--arms-gold-hover, #b3956e);
 }
 
-@media (max-width: 575px) {
-    .ai-travel-launcher {
-        right: 0.75rem;
-        bottom: 0.75rem;
-        padding: 0.7rem 0.85rem;
-        font-size: 0.9rem;
+.ai-launcher-label {
+    position: absolute;
+    right: calc(100% + 0.6rem);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.35rem 0.6rem;
+    white-space: nowrap;
+    color: var(--arms-text, #e2e8f0);
+    background: var(--arms-card, #182230);
+    border: 1px solid var(--arms-border, #263345);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.ai-launcher:hover .ai-launcher-label,
+.ai-launcher-button:focus-visible + .ai-launcher-label {
+    opacity: 1;
+}
+
+.ai-launcher-dismiss {
+    position: absolute;
+    top: -0.6rem;
+    right: -0.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    color: var(--arms-text, #e2e8f0);
+    background: var(--arms-card, #182230);
+    border: 1px solid var(--arms-border, #263345);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.ai-launcher:hover .ai-launcher-dismiss,
+.ai-launcher:focus-within .ai-launcher-dismiss {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .ai-launcher-dismiss {
+        opacity: 1;
     }
+}
+
+body.has-launcher {
+    padding-bottom: 5.5rem;
+}
+
+body.has-launcher.has-footer {
+    padding-bottom: 0;
+}
+
+body.has-launcher.has-footer > .arms-footer {
+    padding-bottom: 5.5rem !important;
+}
+
+html.launcher-dismissed .ai-launcher {
+    display: none;
+}
+
+html.launcher-dismissed body.has-launcher {
+    padding-bottom: 0;
+}
+
+html.launcher-dismissed body.has-launcher.has-footer > .arms-footer {
+    padding-bottom: 1.5rem !important;
+}
+
+@media (max-width: 575px) {
+    .ai-launcher {
+        right: 0.85rem;
+        bottom: 0.85rem;
+    }
+
+    .ai-launcher-button {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.1rem;
+    }
+}
+
+.redirect-msg .btn-close {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0.25rem;
+    background-size: 0.75rem;
 }
 
 #intro {
@@ -473,4 +564,17 @@ img.img-thumbnail.airline-logo-preview {
     --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
     color: var(--arms-text, #e2e8f0);
     border-color: var(--arms-border, #263345);
+}
+
+.badge.bg-warning {
+    color: #0b0f17;
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.75;
 }

@@ -49,6 +49,7 @@ def _has_line_break(value):
 class TravelChatView(PageMixin, TemplateView):
     template_name = "assistant/chat.html"
     page_title = "AI Travel Assistant"
+    assistant_launcher = False
 
 
 @public_view

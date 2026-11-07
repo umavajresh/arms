@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
@@ -27,6 +28,10 @@ class ReservationFlowMixin:
             destination=make_airport("DST", city="Destination"),
             departs_in=timedelta(days=14),
         )
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
 
     def select_seats(self, *seats):
         payload = {
@@ -168,8 +173,32 @@ class ReservationFormTests(ReservationFlowMixin, TestCase):
         self.assertContains(response, '"seat": "E1A"')
         self.assertEqual(response.context["total_price"], 5000.0)
 
+    def test_signed_in_traveller_is_prefilled_as_the_first_passenger(self):
+        self.client.force_login(self.user)
+        self.select_seats(("E1A", "economy"))
+        response = self.client.get(
+            reverse("bookings:reservation-form", args=[self.flight.pk])
+        )
+        self.assertEqual(
+            response.context["reservation_payload"]["primary_traveller"],
+            {"first_name": self.user.first_name, "last_name": self.user.last_name},
+        )
+
+    def test_guests_get_no_prefilled_traveller(self):
+        self.select_seats(("E1A", "economy"))
+        response = self.client.get(
+            reverse("bookings:reservation-form", args=[self.flight.pk])
+        )
+        self.assertIsNone(response.context["reservation_payload"]["primary_traveller"])
+
 
 class ReservationSubmissionTests(ReservationFlowMixin, TestCase):
+    def test_repeated_submissions_are_rate_limited(self):
+        self.select_seats(("E1A", "economy"))
+        statuses = [self.submit().status_code for _ in range(21)]
+        self.assertEqual(statuses[:20], [401] * 20)
+        self.assertEqual(statuses[20], 429)
+
     def test_anonymous_submission_requires_guest_flag(self):
         self.select_seats(("E1A", "economy"))
         self.assertEqual(self.submit().status_code, 401)

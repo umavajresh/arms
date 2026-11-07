@@ -100,7 +100,7 @@ class FlightAdmin(admin.ModelAdmin):
             "aircraft": request.GET.get("aircraft", ""),
         }
         flights = Flight.objects.unarchived().with_route()
-        flights = flights.filter(departure__date__gte=start, departure__date__lte=end)
+        flights = flights.departing_between(start, end)
         if filters["airline"].isdecimal():
             flights = flights.filter(airline_id=filters["airline"])
         if filters["airport"].isdecimal():
@@ -130,6 +130,7 @@ class FlightAdmin(admin.ModelAdmin):
         context = {
             **self.admin_site.each_context(request),
             "title": "Upcoming Flights",
+            "topbar": True,
             "opts": self.model._meta,
             "flights": flights,
             "total_reservations": sum(flight.reservation_count for flight in flights),

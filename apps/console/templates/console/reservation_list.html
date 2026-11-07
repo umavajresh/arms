@@ -66,7 +66,7 @@
             uni_modal("<i class='fa fa-th-list'></i> Reservation Details", $(this).attr('data-url'), 'modal-lg')
         })
         $('.delete-data').click(function() {
-            _conf("Are you sure to delete this reservation?", 'delete_reservation', ["'" + $(this).attr('data-url') + "'"])
+            _conf("Permanently delete this reservation? This cannot be undone. To keep the record, cancel it instead.", 'delete_reservation', ["'" + $(this).attr('data-url') + "'"], 'Delete')
         })
         $('#reservation-tbl').find('td, th').addClass('px-2 py-1 align-middle')
         $('#reservation-tbl').DataTable({

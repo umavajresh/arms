@@ -3,18 +3,22 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
 from apps.bookings.selectors import with_seat_availability
+from apps.core.http import format_form_errors
 from apps.core.mixins import PageMixin, PassengerAreaMixin, public_view
 
 from .forms import FlightSearchForm, UpcomingFlightsFilterForm
 from .models import Airline, Airport, Flight
 from .services.provisioning import RouteProvisioner
 from .services.search import FlightSearch, SearchFilters
+from .services.window import BookingWindow
 
 UPCOMING_DAY_OPTIONS = (1, 3, 7, 14, 30)
+SEARCH_FIELDS = ("from_airport", "to_airport", "departure_date")
 
 
 @public_view
@@ -26,6 +30,10 @@ class FlightSearchView(PassengerAreaMixin, PageMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context["airlines"] = Airline.objects.available()
         context["airports"] = Airport.objects.available()
+        context["booking_window"] = BookingWindow.current()
+        context["selected_from"] = self.request.GET.get("from_airport", "")
+        context["selected_to"] = self.request.GET.get("to_airport", "")
+        context["selected_date"] = self.request.GET.get("departure_date", "")
         return context
 
 
@@ -37,8 +45,8 @@ class FlightResultsView(PassengerAreaMixin, PageMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         form = FlightSearchForm(request.GET)
         if not form.is_valid():
-            messages.error(request, "Invalid Search Inputs")
-            return redirect("pages:landing")
+            messages.error(request, format_form_errors(form))
+            return self.back_to_search(request)
         self.criteria = form.cleaned_data
         RouteProvisioner().ensure_departures(
             self.criteria["from_airport"],
@@ -46,6 +54,13 @@ class FlightResultsView(PassengerAreaMixin, PageMixin, TemplateView):
             self.criteria["departure_date"],
         )
         return super().get(request, *args, **kwargs)
+
+    def back_to_search(self, request):
+        entered = {
+            name: request.GET[name] for name in SEARCH_FIELDS if name in request.GET
+        }
+        target = reverse("flights:search")
+        return redirect("%s?%s" % (target, urlencode(entered)) if entered else target)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,7 +105,7 @@ class UpcomingFlightsView(PassengerAreaMixin, PageMixin, TemplateView):
         start = filters.get("date") or today
         end = start + datetime.timedelta(days=days)
         flights = Flight.objects.bookable().with_route()
-        flights = flights.filter(departure__date__gte=start, departure__date__lte=end)
+        flights = flights.departing_between(start, end)
         if filters.get("airline"):
             flights = flights.filter(airline_id=filters["airline"])
         if filters.get("from_airport"):

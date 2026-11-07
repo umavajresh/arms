@@ -129,6 +129,13 @@ class Flight(models.Model):
 
     class Meta:
         ordering = ["departure"]
+        indexes = [
+            models.Index(
+                fields=["from_airport", "to_airport", "departure"],
+                name="flight_route_departure_idx",
+            ),
+            models.Index(fields=["departure"], name="flight_departure_idx"),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=Q(estimated_arrival__gt=F("departure")),

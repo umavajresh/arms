@@ -32,7 +32,7 @@
                                 
                                 <div class="form-group mb-3">
                                     <label for="date_of_birth" class="control-label">Date of Birth</label>
-                                    <input type="date" class="form-control rounded-0" name="date_of_birth" id="date_of_birth" required="required">
+                                    <input type="date" class="form-control rounded-0" name="date_of_birth" id="date_of_birth" value="{{ form.date_of_birth.value|default_if_none:'' }}" max="{% now 'Y-m-d' %}" required="required">
                                     <small class="form-text text-muted">Please enter your date of birth as MM/DD/YYYY</small>
                                 </div>
                                 

@@ -20,7 +20,7 @@ class Command(BaseCommand):
         today = timezone.localdate()
         end = today + datetime.timedelta(days=options["days"])
         flights = Flight.objects.unarchived().with_route()
-        flights = flights.filter(departure__date__gte=today, departure__date__lte=end)
+        flights = flights.departing_between(today, end)
         if options["airline"]:
             flights = flights.filter(airline__code__iexact=options["airline"])
         if options["airport"]:

@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.accounts.tests.factories import make_administrator
 from apps.bookings.tests.factories import make_reservation
 from apps.flights.models import Aircraft, Airline, Airport, Flight, FlightSchedule
+from apps.flights.services.provisioning import RouteProvisioner
 from apps.flights.services.schedules import ScheduleFlightGenerator
 
 from .factories import make_aircraft, make_airline, make_airport, make_flight
@@ -81,9 +82,32 @@ class FlightSearchViewTests(TestCase):
         response = self.client.get(reverse("flights:search"))
         self.assertContains(response, "Chennai")
 
-    def test_invalid_search_redirects_to_landing(self):
+    def test_invalid_search_returns_to_search_with_inputs_kept(self):
         response = self.client.get(reverse("flights:results"), {"from_airport": "x"})
-        self.assertRedirects(response, reverse("pages:landing"))
+        self.assertRedirects(response, reverse("flights:search") + "?from_airport=x")
+
+    def test_same_origin_and_destination_is_explained(self):
+        query = {
+            "from_airport": self.origin.pk,
+            "to_airport": self.origin.pk,
+            "departure_date": self.day.isoformat(),
+        }
+        response = self.client.get(reverse("flights:results"), query, follow=True)
+        self.assertContains(
+            response, "Origin and destination must be different airports."
+        )
+        self.assertEqual(response.context["selected_from"], str(self.origin.pk))
+        self.assertEqual(response.context["selected_date"], self.day.isoformat())
+
+    def test_past_departure_date_is_rejected(self):
+        yesterday = timezone.localdate() - datetime.timedelta(days=1)
+        query = {
+            "from_airport": self.origin.pk,
+            "to_airport": self.destination.pk,
+            "departure_date": yesterday.isoformat(),
+        }
+        response = self.client.get(reverse("flights:results"), query, follow=True)
+        self.assertContains(response, "Departure date: Choose today or a later date.")
 
     def test_results_apply_time_window_and_price_sorting(self):
         self.add_flight("MOR1", 8, 4000)
@@ -100,6 +124,26 @@ class FlightSearchViewTests(TestCase):
         response = self.results(time_filter="morning")
         self.assertIs(response.context["filter_relaxed"], True)
         self.assertEqual(response.context["unfiltered_count"], 1)
+
+    def test_dates_beyond_the_booking_window_are_rejected(self):
+        far_future = timezone.localdate() + timedelta(days=400)
+        query = {
+            "from_airport": self.origin.pk,
+            "to_airport": self.destination.pk,
+            "departure_date": far_future.isoformat(),
+        }
+        with self.settings(ARMS_BOOKING_HORIZON_DAYS=365):
+            response = self.client.get(reverse("flights:results"), query, follow=True)
+        self.assertContains(response, "Flights open 365 days ahead.")
+        self.assertIs(Flight.objects.exists(), False)
+
+    def test_provisioner_ignores_dates_outside_the_window(self):
+        far_future = timezone.localdate() + timedelta(days=30)
+        with self.settings(ARMS_BOOKING_HORIZON_DAYS=7):
+            created = RouteProvisioner().ensure_departures(
+                self.origin, self.destination, far_future
+            )
+        self.assertEqual(created, 0)
 
     def test_route_slots_are_provisioned_for_empty_future_dates(self):
         response = self.results()

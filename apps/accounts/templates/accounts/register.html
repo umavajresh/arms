@@ -52,27 +52,29 @@
               {% csrf_token %}
               <div class="form-group">
                 <label for="first_name" class="control-label">First Name</label>
-                <input type="text" class="form-control rounded-0" name="first_name" id="first_name" required>
+                <input type="text" class="form-control rounded-0" name="first_name" id="first_name" autocomplete="given-name" required>
               </div>
               <div class="form-group">
                 <label for="last_name" class="control-label">Last Name</label>
-                <input type="text" class="form-control rounded-0" name="last_name" id="last_name" required>
+                <input type="text" class="form-control rounded-0" name="last_name" id="last_name" autocomplete="family-name" required>
               </div>
               <div class="form-group">
                 <label for="email" class="control-label">Email</label>
-                <input type="email" class="form-control rounded-0" name="email" id="email" required>
+                <input type="email" class="form-control rounded-0" name="email" id="email" autocomplete="email" required>
               </div>
               <div class="form-group">
                 <label for="member_id" class="control-label">User ID</label>
-                <input type="text" class="form-control rounded-0" name="member_id" id="member_id" maxlength="50" required>
+                <input type="text" class="form-control rounded-0" name="member_id" id="member_id" maxlength="50" aria-describedby="member_id_help" required>
+                <small id="member_id_help" class="form-text text-muted">Your membership or staff ID. You can sign in with it or with your username.</small>
               </div>
               <div class="form-group">
                 <label for="mobile" class="control-label">Mobile Number</label>
-                <input type="text" class="form-control rounded-0" name="mobile" id="mobile" maxlength="20" required pattern="[0-9]+" title="Please enter only numbers">
+                <input type="tel" class="form-control rounded-0" name="mobile" id="mobile" maxlength="20" autocomplete="tel" inputmode="numeric" required pattern="[0-9]+" title="Please enter only numbers">
               </div>
               <div class="form-group">
                 <label for="username" class="control-label">Username</label>
-                <input type="text" class="form-control rounded-0" name="username" id="username" required>
+                <input type="text" class="form-control rounded-0" name="username" id="username" autocomplete="username" aria-describedby="username_help" required>
+                <small id="username_help" class="form-text text-muted">Letters, digits and @ . + - _ only. You can sign in with it or with your User ID.</small>
               </div>
               <div class="form-group">
                 <h5 class="mb-2">Security Information</h5>
@@ -80,7 +82,7 @@
               </div>
               <div class="form-group">
                 <label for="date_of_birth" class="control-label">Date of Birth</label>
-                <input type="date" class="form-control rounded-0" name="date_of_birth" id="date_of_birth" required>
+                <input type="date" class="form-control rounded-0" name="date_of_birth" id="date_of_birth" max="{% now 'Y-m-d' %}" autocomplete="bday" required>
               </div>
               <div class="form-group">
                 <label for="security_question" class="control-label">Security Question</label>
@@ -98,12 +100,12 @@
               </div>
               <div class="form-group">
                 <label for="password1" class="control-label">Password</label>
-                <input type="password" class="form-control rounded-0" name="password1" id="password1" required minlength="8">
+                <input type="password" class="form-control rounded-0" name="password1" id="password1" autocomplete="new-password" required minlength="8">
                 <small class="form-text text-muted">Password must be at least 8 characters long.</small>
               </div>
               <div class="form-group">
                 <label for="password2" class="control-label">Confirm Password</label>
-                <input type="password" class="form-control rounded-0" name="password2" id="password2" required>
+                <input type="password" class="form-control rounded-0" name="password2" id="password2" autocomplete="new-password" required>
                 <div id="password-match-feedback" class="invalid-feedback">Passwords do not match.</div>
               </div>
               <div class="form-group">

@@ -39,10 +39,14 @@ class ReservationService:
             with transaction.atomic():
                 flight = self._lock_flight(selection.flight_id)
                 self._ensure_seats_still_valid(flight, selection)
+                reference = Reservation.generate_booking_reference(
+                    is_guest=user is None
+                )
                 return [
                     Reservation.objects.create(
                         flight=flight,
                         user=user,
+                        booking_reference=reference,
                         cabin=seat.cabin,
                         seat_number=seat.code,
                         first_name=passenger.first_name,
@@ -66,6 +70,19 @@ class ReservationService:
             raise ReservationRejected(reservation.cancellation_status, http_status=409)
         reservation.status = Reservation.Status.CANCELLED
         reservation.save(update_fields=["status", "updated_at"])
+
+    def cancel_booking(self, reservations):
+        cancellable = [
+            reservation for reservation in reservations if reservation.can_cancel
+        ]
+        if not cancellable:
+            raise ReservationRejected(
+                reservations[0].cancellation_status, http_status=409
+            )
+        with transaction.atomic():
+            for reservation in cancellable:
+                self.cancel(reservation)
+        return cancellable
 
     def _lock_flight(self, flight_id):
         flight = Flight.objects.select_for_update().filter(pk=flight_id).first()
