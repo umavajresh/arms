@@ -39,6 +39,46 @@ class ImportDataCommandTests(TestCase):
         )
 
 
+class SeedScheduleTests(TestCase):
+    def test_import_data_seeds_daily_schedules_inside_the_booking_window(self):
+        call_command("import_data", stdout=StringIO())
+        schedule = FlightSchedule.objects.get(code="AI9131")
+        self.assertEqual(
+            (schedule.from_airport.code, schedule.to_airport.code), ("MAA", "BLR")
+        )
+        self.assertEqual(schedule.recurrence_pattern, FlightSchedule.Recurrence.DAILY)
+        self.assertEqual(schedule.start_date, timezone.localdate())
+        self.assertEqual(schedule.arrival_time, datetime.time(9, 10))
+
+    def test_if_empty_leaves_existing_reference_data_alone(self):
+        make_airline(code="OWN", name="Operator Airline")
+        output = StringIO()
+        call_command("import_data", "--if-empty", stdout=output)
+        self.assertIn("nothing imported", output.getvalue())
+        self.assertIs(Airport.objects.exists(), False)
+
+    def test_recurring_flights_cover_seeded_routes_once(self):
+        call_command("import_data", stdout=StringIO())
+        call_command("generate_recurring_flights", "--days", "2", stdout=StringIO())
+        tomorrow = timezone.localdate() + timedelta(days=1)
+        self.assertIs(
+            Flight.objects.filter(from_airport__code="MAA", to_airport__code="BLR")
+            .departing_on(tomorrow)
+            .exists(),
+            True,
+        )
+        count = Flight.objects.count()
+        call_command("generate_recurring_flights", "--days", "2", stdout=StringIO())
+        self.assertEqual(Flight.objects.count(), count)
+
+    def test_without_schedules_no_flights_are_generated(self):
+        make_flight(code="ONE1")
+        output = StringIO()
+        call_command("generate_recurring_flights", "--days", "5", stdout=output)
+        self.assertIn("No active flight schedules", output.getvalue())
+        self.assertEqual(Flight.objects.count(), 1)
+
+
 class FlightSearchViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):

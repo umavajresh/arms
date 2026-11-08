@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase, override_settings
 
-from apps.assistant.llm import get_llm_provider_status
+from apps.assistant.llm import ProviderConfiguration
 from apps.assistant.preferences import extract_travel_preferences
 from apps.assistant.pricing import compute_price_breakdown
 from apps.assistant.prompts import build_grounding_context
@@ -15,6 +15,7 @@ NO_PROVIDER_KEYS = {
     "huggingface": "",
     "openai": "",
 }
+OPENROUTER_KEYS = {**NO_PROVIDER_KEYS, "openrouter": "sk-or-test-key"}
 
 
 class PreferenceExtractionTests(SimpleTestCase):
@@ -175,18 +176,16 @@ class LocalResponseTests(TestCase):
         self.assertIn("Shibuya", get_travel_response("Tell me about Tokyo"))
         self.assertIn("Eiffel Tower", get_travel_response("Trip to Paris"))
 
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_KEYS)
     def test_booking_reference_is_routed_to_verified_portal(self):
         with patch("apps.assistant.responder.call_external_llm") as model_call:
-            response = get_travel_response(
-                "Please look up GUEST-AB12-CD34",
-                api_key="sk-or-test-key",
-                ai_provider="openrouter",
-            )
+            response = get_travel_response("Please look up GUEST-AB12-CD34")
         self.assertIn("Guest Booking Lookup", response)
         model_call.assert_not_called()
 
 
 class ModelResponseTests(TestCase):
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_KEYS)
     def test_model_receives_history_and_requested_language(self):
         with (
             patch(
@@ -205,11 +204,9 @@ class ModelResponseTests(TestCase):
                     {"role": "user", "content": "I am planning a trip to Paris."},
                     {"role": "assistant", "content": "How long will you stay?"},
                 ],
-                api_key="test-provider-key",
-                ai_provider="openrouter",
             )
         self.assertEqual(response, "Réponse personnalisée.")
-        messages = model_call.call_args.kwargs["messages"]
+        messages = model_call.call_args.args[0]
         self.assertIn("Respond in French", messages[0]["content"])
         self.assertEqual(messages[1]["content"], "I am planning a trip to Paris.")
         self.assertEqual(messages[-1]["content"], "What is the baggage allowance?")
@@ -222,23 +219,31 @@ class ModelResponseTests(TestCase):
 
 
 class ProviderConfigurationTests(SimpleTestCase):
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_KEYS, ARMS_AI_MODEL="")
+    def test_server_key_selects_provider_and_default_model(self):
+        configuration = ProviderConfiguration.from_settings()
+        self.assertEqual(configuration.provider, "openrouter")
+        self.assertEqual(configuration.model, "openrouter/free")
+        self.assertIs(configuration.is_configured, True)
+
     @override_settings(
-        ARMS_AI_PROVIDER_API_KEYS={**NO_PROVIDER_KEYS, "openrouter": "sk-or-test-key"},
-        ARMS_AI_FALLBACK_API_KEY="",
+        ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_KEYS, ARMS_AI_MODEL="vendor/paid-model"
     )
-    def test_auto_provider_uses_configured_key(self):
+    def test_configured_model_overrides_the_default(self):
         self.assertEqual(
-            get_llm_provider_status(provider="auto"),
-            {"has_key": True, "provider": "openrouter", "source": "environment"},
+            ProviderConfiguration.from_settings().model, "vendor/paid-model"
         )
 
     @override_settings(
-        ARMS_AI_PROVIDER_API_KEYS=NO_PROVIDER_KEYS, ARMS_AI_FALLBACK_API_KEY="gsk_x"
+        ARMS_AI_PROVIDER_API_KEYS=NO_PROVIDER_KEYS,
+        ARMS_AI_FALLBACK_API_KEY="gsk_x",
+        ARMS_AI_MODEL="",
     )
     def test_fallback_key_provider_is_inferred_from_prefix(self):
-        self.assertEqual(get_llm_provider_status()["provider"], "groq")
+        self.assertEqual(ProviderConfiguration.from_settings().provider, "groq")
 
-    def test_session_key_takes_precedence(self):
-        status = get_llm_provider_status(api_key="hf_session", provider="auto")
-        self.assertEqual(status["provider"], "huggingface")
-        self.assertEqual(status["source"], "session")
+    @override_settings(
+        ARMS_AI_PROVIDER_API_KEYS=NO_PROVIDER_KEYS, ARMS_AI_FALLBACK_API_KEY=""
+    )
+    def test_without_keys_the_assistant_is_not_configured(self):
+        self.assertIs(ProviderConfiguration.from_settings().is_configured, False)

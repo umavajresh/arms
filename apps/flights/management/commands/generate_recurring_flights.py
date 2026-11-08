@@ -5,10 +5,7 @@ from django.utils import timezone
 
 from apps.flights.models import Flight, FlightSchedule
 from apps.flights.querysets import start_of_day
-from apps.flights.services.schedules import (
-    ScheduleFlightGenerator,
-    TemplateFlightCloner,
-)
+from apps.flights.services.schedules import ScheduleFlightGenerator
 
 
 class Command(BaseCommand):
@@ -44,11 +41,10 @@ class Command(BaseCommand):
         if not schedules.exists():
             self.stdout.write(
                 self.style.WARNING(
-                    "No flight schedules found; cloning existing flights instead."
+                    "No active flight schedules. Run import_data or add schedules "
+                    "in Django admin."
                 )
             )
-            created = TemplateFlightCloner().clone(today, end)
-            self.stdout.write(self.style.SUCCESS("Created %d flights." % created))
             return
         generator = ScheduleFlightGenerator()
         total = 0

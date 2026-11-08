@@ -48,30 +48,3 @@ class ScheduleFlightGenerator:
             },
         )
         return int(created)
-
-
-class TemplateFlightCloner:
-    def clone(self, start, end):
-        created = 0
-        for template in Flight.objects.unarchived().select_related("aircraft"):
-            duration = template.estimated_arrival - template.departure
-            departure_time = timezone.localtime(template.departure).timetz()
-            for day in _daterange(start, end):
-                departure = datetime.datetime.combine(day, departure_time)
-                code = "%s-%s" % (template.code, day.strftime("%m%d"))
-                if Flight.objects.filter(code=code).departing_on(day).exists():
-                    continue
-                Flight.objects.create(
-                    code=code,
-                    airline=template.airline,
-                    from_airport=template.from_airport,
-                    to_airport=template.to_airport,
-                    aircraft=template.aircraft,
-                    departure=departure,
-                    estimated_arrival=departure + duration,
-                    business_class_price=template.business_class_price,
-                    economy_price=template.economy_price,
-                    currency=template.currency,
-                )
-                created += 1
-        return created

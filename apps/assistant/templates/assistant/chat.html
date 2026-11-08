@@ -96,7 +96,6 @@
         font-weight: 600;
     }
 
-
     .typing-loader {
         display: inline-block;
         font-size: 0.85rem;
@@ -104,31 +103,6 @@
         font-style: italic;
     }
 
-    .ai-status-badge {
-        font-size: 0.75rem;
-        border: 1px solid var(--arms-border, #263345);
-        padding: 0.2rem 0.5rem;
-        background: #0b0f17;
-        color: var(--arms-muted, #94a3b8);
-    }
-    .ai-status-badge.connected {
-        border-color: #38a169;
-        color: #68d391;
-    }
-
-    .modal-content-dark {
-        background: var(--arms-surface, #131924);
-        border: 1px solid var(--arms-border, #263345);
-        color: var(--arms-text, #e2e8f0);
-    }
-    .modal-content-dark .modal-header {
-        background: var(--arms-card, #182230);
-        border-bottom: 1px solid var(--arms-border, #263345);
-    }
-    .modal-content-dark .modal-footer {
-        background: var(--arms-card, #182230);
-        border-top: 1px solid var(--arms-border, #263345);
-    }
 </style>
 
 <div class="container py-4">
@@ -142,9 +116,8 @@
                             <h1 class="h5 mb-0 fw-bold text-light">
                                 <i class="fas fa-robot me-2 text-secondary" aria-hidden="true"></i>AI Travel Assistant
                             </h1>
-                            <span id="active-engine-badge" class="ai-status-badge rounded-1 ms-2">AI setup: API key required</span>
                         </div>
-                        <small class="text-muted">Model-generated travel help with ARMS flight data. Add a provider key to enable live AI responses; guided answers remain available without one.</small>
+                        <small class="text-muted">Travel help built on ARMS flight data. Replies may be written by an AI model, so please do not share personal details in chat.</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <div class="d-flex align-items-center gap-1" id="lang-selector">
@@ -156,9 +129,6 @@
                             <button type="button" class="lang-pill" data-lang="ja">JA</button>
                             <button type="button" class="lang-pill" data-lang="hi">HI</button>
                         </div>
-                        <button type="button" class="btn btn-outline-warning btn-sm rounded-0" data-bs-toggle="modal" data-bs-target="#aiSettingsModal">
-                            <i class="fas fa-sliders-h me-1" aria-hidden="true"></i> AI Key & Model
-                        </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm rounded-0" id="clear-chat-button">
                             Clear conversation
                         </button>
@@ -200,74 +170,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="aiSettingsModal" tabindex="-1" aria-labelledby="aiSettingsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-dark rounded-0">
-            <div class="modal-header">
-                <h5 class="modal-title h6" id="aiSettingsModalLabel">
-                    <i class="fas fa-brain me-2 text-warning" aria-hidden="true"></i>AI Model & Open-Source Key Settings
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="small text-muted mb-3">
-                    Add a provider API key to enable model-generated conversation. OpenRouter is the recommended configurable default; Groq, Hugging Face, and OpenAI are also supported. Without a key, ARMS provides clearly identified rule-based travel guidance.
-                </p>
-                <p class="small text-muted mb-3">
-                    When a provider is active, your message and up to three previous exchanges are sent to that provider. Avoid sharing sensitive personal details. Use Clear conversation to delete the temporary chat history stored in your session.
-                </p>
-
-                <div class="mb-3">
-                    <label for="ai-provider-select" class="form-label small text-light fw-bold">AI Provider</label>
-                    <select id="ai-provider-select" class="form-select form-select-dark rounded-0">
-                        <option value="openrouter">OpenRouter (Recommended: Free Open-Source Models)</option>
-                        <option value="groq">Groq (Ultra-Fast Open Weights: Llama 3.3)</option>
-                        <option value="huggingface">Hugging Face (Inference API)</option>
-                        <option value="openai">OpenAI (GPT-4o Mini)</option>
-                        <option value="auto">Auto-Detect from API Key Format</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="ai-model-select" class="form-label small text-light fw-bold">Model</label>
-                    <select id="ai-model-select" class="form-select form-select-dark rounded-0">
-                        <option value="meta-llama/llama-3.3-70b-instruct:free">Meta Llama 3.3 70B Instruct (Free on OpenRouter)</option>
-                        <option value="mistralai/mistral-7b-instruct:free">Mistral 7B Instruct (Free on OpenRouter)</option>
-                        <option value="google/gemini-2.0-flash-lite:free">Gemini 2.0 Flash Lite (Free on OpenRouter)</option>
-                        <option value="qwen/qwen-2.5-72b-instruct:free">Qwen 2.5 72B Instruct (Free on OpenRouter)</option>
-                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Groq)</option>
-                        <option value="gpt-4o-mini">GPT-4o Mini (OpenAI)</option>
-                        <option value="default">Provider Default Model</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="ai-api-key-input" class="form-label small text-light fw-bold">API Key / Token</label>
-                    <div class="input-group">
-                        <input type="password" id="ai-api-key-input" class="form-control rounded-0 form-control-dark" placeholder="sk-or-... / gsk_... / hf_... / sk-...">
-                        <button type="button" class="btn btn-outline-secondary rounded-0" id="toggle-key-visibility">
-                            <i class="fas fa-eye" id="toggle-key-icon" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <div class="form-text text-muted small mt-1">
-                        The key stays server-side in your active session and is not returned to the browser after saving. Get a key from <a href="https://openrouter.ai" target="_blank" rel="noopener" class="text-warning text-decoration-underline">OpenRouter</a> or <a href="https://console.groq.com" target="_blank" rel="noopener" class="text-warning text-decoration-underline">Groq</a>.
-                    </div>
-                </div>
-
-                <div id="ai-settings-alert" class="alert alert-info py-2 small d-none" role="alert"></div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-danger btn-sm rounded-0" id="btn-clear-ai-key">
-                    Clear Key & Use Neural Engine
-                </button>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-0" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-gold btn-sm rounded-0" id="btn-save-ai-settings">Save Settings</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock pageContent %}
 
 {% block ScriptBlock %}
@@ -277,16 +179,7 @@
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-message');
     const submitBtn = document.getElementById('chat-submit-btn');
-    const activeEngineBadge = document.getElementById('active-engine-badge');
-    const providerSelect = document.getElementById('ai-provider-select');
-    const modelSelect = document.getElementById('ai-model-select');
-    const apiKeyInput = document.getElementById('ai-api-key-input');
-    const btnSaveAiSettings = document.getElementById('btn-save-ai-settings');
-    const btnClearAiKey = document.getElementById('btn-clear-ai-key');
     const clearChatButton = document.getElementById('clear-chat-button');
-    const aiSettingsAlert = document.getElementById('ai-settings-alert');
-    const toggleKeyBtn = document.getElementById('toggle-key-visibility');
-    const toggleKeyIcon = document.getElementById('toggle-key-icon');
 
     let currentLanguage = 'en';
 
@@ -298,107 +191,6 @@
             addMessage('Language switched to ' + this.textContent + '.', false);
         });
     });
-
-    if (toggleKeyBtn) {
-        toggleKeyBtn.addEventListener('click', function() {
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                toggleKeyIcon.className = 'fas fa-eye-slash';
-            } else {
-                apiKeyInput.type = 'password';
-                toggleKeyIcon.className = 'fas fa-eye';
-            }
-        });
-    }
-
-    function checkAiStatus() {
-        $.ajax({
-            url: "{% url 'assistant:chat-api' %}",
-            method: "POST",
-            data: {
-                action: 'get_ai_status',
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            },
-            dataType: 'json',
-            success: function(resp) {
-                if (resp && resp.status === 'success') {
-                    if (resp.has_key) {
-                        activeEngineBadge.textContent = 'Real AI: ' + resp.provider.toUpperCase() + ' (' + resp.source + ')';
-                        activeEngineBadge.classList.add('connected');
-                        if (resp.provider) providerSelect.value = resp.provider;
-                        if (resp.model) modelSelect.value = resp.model;
-                    } else {
-                        activeEngineBadge.textContent = 'Guided fallback: API key required for real AI';
-                        activeEngineBadge.classList.remove('connected');
-                    }
-                }
-            }
-        });
-    }
-    checkAiStatus();
-
-    if (btnSaveAiSettings) {
-        btnSaveAiSettings.addEventListener('click', function() {
-            const keyVal = apiKeyInput.value.trim();
-            const providerVal = providerSelect.value;
-            const modelVal = modelSelect.value;
-
-            btnSaveAiSettings.disabled = true;
-            btnSaveAiSettings.textContent = 'Saving...';
-
-            $.ajax({
-                url: "{% url 'assistant:chat-api' %}",
-                method: "POST",
-                data: {
-                    action: 'save_ai_settings',
-                    api_key: keyVal,
-                    provider: providerVal,
-                    model: modelVal,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                dataType: 'json',
-                success: function(resp) {
-                    btnSaveAiSettings.disabled = false;
-                    btnSaveAiSettings.textContent = 'Save Settings';
-                    aiSettingsAlert.className = 'alert alert-success py-2 small';
-                    aiSettingsAlert.textContent = 'AI configuration successfully saved to active session.';
-                    aiSettingsAlert.classList.remove('d-none');
-                    checkAiStatus();
-                },
-                error: function() {
-                    btnSaveAiSettings.disabled = false;
-                    btnSaveAiSettings.textContent = 'Save Settings';
-                    aiSettingsAlert.className = 'alert alert-danger py-2 small';
-                    aiSettingsAlert.textContent = 'Unable to save settings. Please try again.';
-                    aiSettingsAlert.classList.remove('d-none');
-                }
-            });
-        });
-    }
-
-    if (btnClearAiKey) {
-        btnClearAiKey.addEventListener('click', function() {
-            apiKeyInput.value = '';
-            $.ajax({
-                url: "{% url 'assistant:chat-api' %}",
-                method: "POST",
-                data: {
-                    action: 'save_ai_settings',
-                    clear_key: '1',
-                    provider: 'auto',
-                    model: 'default',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                dataType: 'json',
-                success: function() {
-                    aiSettingsAlert.className = 'alert alert-info py-2 small';
-                    aiSettingsAlert.textContent = 'Key removed. Switched back to built-in ARMS Neural Engine.';
-                    aiSettingsAlert.classList.remove('d-none');
-                    checkAiStatus();
-                }
-            });
-        });
-    }
 
     if (clearChatButton) {
         clearChatButton.addEventListener('click', function() {
@@ -433,6 +225,8 @@
         escaped = escaped.replace(/\[([^\]]+)\]\(((\/[a-zA-Z0-9_\-\/?=&]+))\)/g, function(match, label, url) {
             return '<a href="' + url + '" class="chat-link" target="_self">' + label + ' &rarr;</a>';
         });
+        escaped = escaped.replace(/^#{1,6}\s+(.+)$/gm, '<strong>$1</strong>');
+        escaped = escaped.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 
         return escaped;
     }

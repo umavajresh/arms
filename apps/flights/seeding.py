@@ -6,7 +6,8 @@ from pathlib import Path
 from django.db import transaction
 from django.utils import timezone
 
-from .models import Aircraft, Airline, Airport, Flight
+from .models import Aircraft, Airline, Airport, Flight, FlightSchedule
+from .services.window import BookingWindow
 
 SEED_DIRECTORY = Path(__file__).resolve().parent / "seed_data"
 
@@ -50,7 +51,11 @@ class ReferenceDataImporter:
             "airports": self.import_airports(),
             "aircraft": self.import_aircraft(),
             "flights": self.import_flights(),
+            "schedules": self.import_schedules(),
         }
+
+    def has_reference_data(self):
+        return Airline.objects.exists() or Airport.objects.exists()
 
     def import_airlines(self):
         return sum(
@@ -114,6 +119,37 @@ class ReferenceDataImporter:
                     "estimated_arrival": arrival,
                     "business_class_price": Decimal(row["business_class_price"]),
                     "economy_price": Decimal(row["economy_price"]),
+                },
+            )
+            created += is_new
+        return created
+
+    def import_schedules(self):
+        window = BookingWindow.current()
+        created = 0
+        for row in _rows(self.directory / "schedules.csv"):
+            departure = datetime.time.fromisoformat(row["departure_time"])
+            duration = int(row["duration_minutes"])
+            arrival = (
+                datetime.datetime.combine(window.earliest, departure)
+                + datetime.timedelta(minutes=duration)
+            ).time()
+            _, is_new = FlightSchedule.objects.get_or_create(
+                code=row["code"],
+                is_archived=False,
+                defaults={
+                    "airline": self._airline(row["airline_code"]),
+                    "from_airport": self._airport(row["from_airport_code"]),
+                    "to_airport": self._airport(row["to_airport_code"]),
+                    "aircraft": self._aircraft(row["aircraft_code"]),
+                    "departure_time": departure,
+                    "arrival_time": arrival,
+                    "duration_minutes": duration,
+                    "recurrence_pattern": FlightSchedule.Recurrence.DAILY,
+                    "business_class_price": Decimal(row["business_class_price"]),
+                    "economy_price": Decimal(row["economy_price"]),
+                    "start_date": window.earliest,
+                    "end_date": window.latest,
                 },
             )
             created += is_new
