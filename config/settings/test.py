@@ -36,6 +36,7 @@ ARMS_AI_PROVIDER_API_KEYS = {
     "openai": "",
 }
 ARMS_AI_FALLBACK_API_KEY = ""
+ARMS_AI_MODEL = ""
 
 LOGGING = {
     "version": 1,

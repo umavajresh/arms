@@ -3,7 +3,7 @@ from datetime import timedelta
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
-from django.test import Client, RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from apps.assistant.inventory import search_real_flights
@@ -18,6 +18,15 @@ from apps.flights.tests.factories import (
     make_airport,
     make_flight,
 )
+
+NO_KEYS = {"openrouter": "", "groq": "", "huggingface": "", "openai": ""}
+OPENROUTER_ONLY = {**NO_KEYS, "openrouter": "sk-or-test-key"}
+
+
+def provider_response(status_code, payload):
+    response = Mock(status_code=status_code)
+    response.json.return_value = payload
+    return response
 
 
 class TravelToolTests(TestCase):
@@ -88,6 +97,7 @@ class TravelToolTests(TestCase):
             {"error": "Unsupported travel tool."},
         )
 
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
     def test_model_tool_call_is_executed_and_followed_by_grounded_completion(self):
         tool_response = Mock(status_code=200)
         tool_response.json.return_value = {
@@ -120,9 +130,7 @@ class TravelToolTests(TestCase):
             side_effect=[tool_response, final_response],
         ) as request:
             result = call_external_llm(
-                [{"role": "user", "content": "Find a flight from Chennai to Dubai."}],
-                api_key="sk-or-test-key",
-                provider="openrouter",
+                [{"role": "user", "content": "Find a flight from Chennai to Dubai."}]
             )
         self.assertEqual(result, "ARMS lists flight SK101.")
         first_payload = request.call_args_list[0].kwargs["json"]
@@ -139,6 +147,98 @@ class TravelToolTests(TestCase):
         )
         self.assertNotIn("tools", request.call_args_list[1].kwargs["json"])
 
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
+    def test_request_is_retried_without_tools_when_the_model_rejects_them(self):
+        rejected = provider_response(404, {"error": {"message": "No tool support"}})
+        answered = provider_response(
+            200, {"choices": [{"message": {"content": "Here is a plan."}}]}
+        )
+        with patch(
+            "apps.assistant.llm.requests.post", side_effect=[rejected, answered]
+        ) as request:
+            result = call_external_llm([{"role": "user", "content": "Plan a trip"}])
+        self.assertEqual(result, "Here is a plan.")
+        self.assertIn("tools", request.call_args_list[0].kwargs["json"])
+        self.assertNotIn("tools", request.call_args_list[1].kwargs["json"])
+
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
+    def test_empty_reply_is_retried_once(self):
+        empty = provider_response(200, {"choices": [{"message": {"content": ""}}]})
+        answered = provider_response(
+            200, {"choices": [{"message": {"content": "Second try."}}]}
+        )
+        with patch("apps.assistant.llm.requests.post", side_effect=[empty, answered]):
+            self.assertEqual(
+                call_external_llm([{"role": "user", "content": "x"}]), "Second try."
+            )
+        with patch("apps.assistant.llm.requests.post", return_value=empty) as post:
+            self.assertIsNone(call_external_llm([{"role": "user", "content": "x"}]))
+        self.assertEqual(post.call_count, 2)
+
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
+    def test_tool_markup_written_as_text_is_never_shown(self):
+        leaked = provider_response(
+            200,
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": '<dots_function_call><invoke name="x">'
+                            "</invoke></dots_function_call>"
+                        }
+                    }
+                ]
+            },
+        )
+        answered = provider_response(
+            200, {"choices": [{"message": {"content": "Clean answer."}}]}
+        )
+        with patch("apps.assistant.llm.requests.post", side_effect=[leaked, answered]):
+            self.assertEqual(
+                call_external_llm([{"role": "user", "content": "x"}]), "Clean answer."
+            )
+
+    def test_flight_search_tool_matches_city_names(self):
+        paris = make_airport(
+            "CDG", name="Charles de Gaulle Airport", city="Paris", country="France"
+        )
+        delhi = make_airport("DEL", name="Indira Gandhi International", city="Delhi")
+        make_flight(
+            code="PAR1",
+            airline=make_airline(code="PRT", name="Paris Test Air"),
+            origin=delhi,
+            destination=paris,
+        )
+        result = execute_travel_tool(
+            "search_flights", {"origin": "Delhi", "destination": "Paris"}
+        )
+        self.assertEqual([flight["code"] for flight in result], ["PAR1"])
+
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
+    def test_rate_limited_request_is_not_retried(self):
+        limited = provider_response(429, {"error": {"message": "Rate limit"}})
+        with patch("apps.assistant.llm.requests.post", return_value=limited) as post:
+            self.assertIsNone(call_external_llm([{"role": "user", "content": "x"}]))
+        post.assert_called_once()
+
+    @override_settings(
+        ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="vendor/chosen-model"
+    )
+    def test_configured_model_and_attribution_headers_are_sent(self):
+        answered = provider_response(
+            200, {"choices": [{"message": {"content": "Ready."}}]}
+        )
+        with patch("apps.assistant.llm.requests.post", return_value=answered) as post:
+            call_external_llm([{"role": "user", "content": "x"}])
+        self.assertEqual(post.call_args.kwargs["json"]["model"], "vendor/chosen-model")
+        self.assertEqual(
+            post.call_args.kwargs["headers"]["Authorization"], "Bearer sk-or-test-key"
+        )
+        self.assertEqual(
+            post.call_args.kwargs["headers"]["X-Title"], "ARMS Travel Assistant"
+        )
+
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=OPENROUTER_ONLY, ARMS_AI_MODEL="")
     def test_model_requesting_unknown_tool_is_refused(self):
         response = Mock(status_code=200)
         response.json.return_value = {
@@ -159,13 +259,7 @@ class TravelToolTests(TestCase):
             ]
         }
         with patch("apps.assistant.llm.requests.post", return_value=response):
-            self.assertIsNone(
-                call_external_llm(
-                    [{"role": "user", "content": "x"}],
-                    api_key="sk-or-test-key",
-                    provider="openrouter",
-                )
-            )
+            self.assertIsNone(call_external_llm([{"role": "user", "content": "x"}]))
 
 
 class InventorySearchTests(TestCase):
@@ -236,25 +330,22 @@ class ChatApiTests(TestCase):
         self.assertEqual(self.post(message="x" * 2001).status_code, 400)
         self.assertEqual(self.post(message="hi", language="xx").status_code, 400)
 
-    def test_ai_settings_reject_unsupported_provider(self):
-        response = self.post(action="save_ai_settings", provider="untrusted-provider")
-        self.assertEqual(response.status_code, 400)
+    @override_settings(ARMS_AI_PROVIDER_API_KEYS=NO_KEYS, ARMS_AI_FALLBACK_API_KEY="")
+    def test_keys_and_models_sent_by_the_browser_are_ignored(self):
+        with patch("apps.assistant.responder.call_external_llm") as model_call:
+            response = self.post(
+                message="Plan a trip to Goa",
+                api_key="sk-or-v1-visitor-key",
+                provider="openrouter",
+                model="any/model",
+            )
+        self.assertEqual(response.status_code, 200)
+        model_call.assert_not_called()
 
-    def test_ai_settings_round_trip(self):
-        client = Client()
-        saved = client.post(
-            reverse("assistant:chat-api"),
-            {
-                "action": "save_ai_settings",
-                "api_key": "sk-or-v1-testkey123456789",
-                "provider": "openrouter",
-                "model": "meta-llama/llama-3.3-70b-instruct:free",
-            },
-        )
-        self.assertEqual(saved.json()["status"], "success")
-        status = client.post(reverse("assistant:chat-api"), {"action": "get_ai_status"})
-        self.assertIs(status.json()["has_key"], True)
-        self.assertEqual(status.json()["provider"], "openrouter")
+    def test_chat_page_offers_no_key_or_model_settings(self):
+        page = self.client.get(reverse("assistant:chat"))
+        self.assertNotContains(page, "aiSettingsModal")
+        self.assertNotContains(page, "API Key")
 
     def test_direct_tool_calls_validate_input(self):
         self.assertEqual(

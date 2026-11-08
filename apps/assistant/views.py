@@ -10,7 +10,6 @@ from apps.core.rate_limit import RateLimiter
 
 from .conversation import ChatSession
 from .inventory import search_real_flights
-from .llm import AUTO_PROVIDER, SUPPORTED_PROVIDERS, get_llm_provider_status
 from .preferences import extract_travel_preferences
 from .responder import get_travel_response
 from .text import SUPPORTED_LANGUAGES
@@ -21,8 +20,6 @@ logger = logging.getLogger(__name__)
 chat_limiter = RateLimiter("ai-chat", limit=30, window_seconds=60)
 MAX_MESSAGE_LENGTH = 2000
 MAX_TOOL_ARGUMENTS_LENGTH = 4000
-MAX_API_KEY_LENGTH = 512
-MAX_MODEL_LENGTH = 128
 INVENTORY_UNAVAILABLE_NOTE = (
     "\n\nARMS flight inventory could not be checked for this request. "
     "No flight availability or fare is confirmed."
@@ -41,10 +38,6 @@ def chat_success(**payload):
     return JsonResponse({"status": "success", **payload})
 
 
-def _has_line_break(value):
-    return any(char in value for char in "\r\n")
-
-
 @public_view
 class TravelChatView(PageMixin, TemplateView):
     template_name = "assistant/chat.html"
@@ -58,14 +51,8 @@ class TravelChatApiView(View):
 
     def post(self, request, *args, **kwargs):
         self.chat = ChatSession(request.session)
-        actions = {
-            "save_ai_settings": self.save_settings,
-            "get_ai_status": self.provider_status,
-            "clear_chat": self.clear_chat,
-        }
-        action = actions.get(request.POST.get("action"))
-        if action is not None:
-            return action()
+        if request.POST.get("action") == "clear_chat":
+            return self.clear_chat()
         if chat_limiter.is_limited(request):
             return chat_failure(
                 "You have sent too many messages. "
@@ -75,33 +62,6 @@ class TravelChatApiView(View):
         if request.POST.get("tool_name"):
             return self.run_tool()
         return self.answer()
-
-    def save_settings(self):
-        api_key = self.request.POST.get("api_key", "").strip()
-        provider = self.request.POST.get("provider", AUTO_PROVIDER).strip().lower()
-        model = self.request.POST.get("model", "").strip()
-        if provider not in (*SUPPORTED_PROVIDERS, AUTO_PROVIDER):
-            return chat_failure("Choose a supported AI provider.")
-        if (
-            len(api_key) > MAX_API_KEY_LENGTH
-            or _has_line_break(api_key)
-            or len(model) > MAX_MODEL_LENGTH
-            or _has_line_break(model)
-        ):
-            return chat_failure("The API key or model name is invalid.")
-        self.chat.save_settings(
-            api_key=api_key,
-            provider=provider,
-            model=model,
-            clear_key=self.request.POST.get("clear_key") == "1",
-        )
-        return chat_success(message="AI configuration saved.")
-
-    def provider_status(self):
-        status = get_llm_provider_status(
-            api_key=self.chat.api_key, provider=self.chat.provider
-        )
-        return chat_success(**status, model=self.chat.model or "default")
 
     def clear_chat(self):
         self.chat.clear_conversation()
@@ -150,9 +110,6 @@ class TravelChatApiView(View):
                 flights,
                 language=language,
                 session_context=self.chat.history,
-                api_key=self.request.POST.get("api_key") or self.chat.api_key,
-                ai_provider=self.request.POST.get("provider") or self.chat.provider,
-                ai_model=self.request.POST.get("model") or self.chat.model,
                 travel_preferences=preferences,
             )
         except Exception:

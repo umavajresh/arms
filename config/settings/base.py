@@ -144,3 +144,4 @@ ARMS_AI_PROVIDER_API_KEYS = {
     "openai": read_str("OPENAI_API_KEY"),
 }
 ARMS_AI_FALLBACK_API_KEY = read_str("AI_API_KEY")
+ARMS_AI_MODEL = read_str("AI_MODEL")

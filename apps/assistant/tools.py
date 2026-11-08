@@ -1,12 +1,15 @@
 import math
 import re
 
-from django.db.models import Q
-
 from apps.bookings.guest_access import GUEST_REFERENCE_PATTERN
 from apps.bookings.models import Reservation
 
-from .inventory import bookable_flights, format_moment, recorded_flights
+from .inventory import (
+    airport_matches,
+    bookable_flights,
+    format_moment,
+    recorded_flights,
+)
 from .pricing import compute_price_breakdown
 
 FLIGHT_CODE_PATTERN = re.compile(r"[A-Za-z0-9-]{1,32}")
@@ -45,7 +48,8 @@ class SearchFlightsTool(TravelTool):
     name = "search_flights"
     description = (
         "Search scheduled flights and seat counts recorded in ARMS inventory. "
-        "This is not live airline availability."
+        "Give origin and destination as city names (for example Paris) or "
+        "airport codes (for example CDG). This is not live airline availability."
     )
     parameters = {
         "type": "object",
@@ -69,15 +73,9 @@ class SearchFlightsTool(TravelTool):
             )
         flights = bookable_flights()
         if origin:
-            flights = flights.filter(
-                Q(from_airport__name__icontains=origin)
-                | Q(from_airport__code__icontains=origin)
-            )
+            flights = flights.filter(airport_matches("from_airport", origin))
         if destination:
-            flights = flights.filter(
-                Q(to_airport__name__icontains=destination)
-                | Q(to_airport__code__icontains=destination)
-            )
+            flights = flights.filter(airport_matches("to_airport", destination))
         if arguments.get("max_price") is not None:
             flights = flights.filter(
                 economy_price__lte=self._positive_price(arguments["max_price"])

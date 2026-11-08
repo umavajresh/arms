@@ -9,37 +9,14 @@ ASSISTANT_CONTENT_LIMIT = 600
 class ChatSession:
     history_key = "ai_chat_history"
     preferences_key = "ai_travel_preferences"
-    api_key_key = "ai_api_key"
-    provider_key = "ai_provider"
-    model_key = "ai_model"
 
     def __init__(self, session):
         self.session = session
 
     @property
-    def api_key(self):
-        return self.session.get(self.api_key_key)
-
-    @property
-    def provider(self):
-        return self.session.get(self.provider_key, "auto")
-
-    @property
-    def model(self):
-        return self.session.get(self.model_key)
-
-    @property
     def history(self):
         history = self.session.get(self.history_key, [])
         return history if isinstance(history, list) else []
-
-    def save_settings(self, api_key, provider, model, clear_key):
-        if clear_key:
-            self.session.pop(self.api_key_key, None)
-        elif api_key:
-            self.session[self.api_key_key] = api_key
-        self.session[self.provider_key] = provider
-        self.session[self.model_key] = model
 
     def clear_conversation(self):
         self.session.pop(self.history_key, None)

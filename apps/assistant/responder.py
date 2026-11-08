@@ -40,7 +40,7 @@ class TravelResponder:
             self.message
         )
 
-    def respond(self, session_context=None, api_key=None, provider=None, model=None):
+    def respond(self, session_context=None):
         faq = answer_faq(self.message, language=self.language)
         if faq and STATUS_QUERY.search(self.lowered):
             return faq
@@ -50,13 +50,8 @@ class TravelResponder:
                 "[Guest Booking Lookup](%s) portal and complete its passenger "
                 "verification." % reverse("bookings:guest-lookup")
             )
-        if ProviderConfiguration.resolve(api_key, provider).key:
-            reply = call_external_llm(
-                messages=self.model_messages(session_context),
-                api_key=api_key,
-                provider=provider,
-                model=model,
-            )
+        if ProviderConfiguration.from_settings().is_configured:
+            reply = call_external_llm(self.model_messages(session_context))
             if reply:
                 return reply
         return faq or self.local_response()
@@ -341,10 +336,7 @@ def get_travel_response(
     flights=None,
     language="en",
     session_context=None,
-    api_key=None,
-    ai_provider=None,
-    ai_model=None,
     travel_preferences=None,
 ):
     responder = TravelResponder(message, flights, language, travel_preferences)
-    return responder.respond(session_context, api_key, ai_provider, ai_model)
+    return responder.respond(session_context)

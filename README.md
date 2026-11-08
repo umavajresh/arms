@@ -50,7 +50,8 @@ Project demonstration: [YouTube video](https://youtu.be/EJkb_slY4gU?si=LH_LaqsJE
 
 ### Travel assistant and tracking
 
-- The assistant answers in English, Spanish, French, German, Japanese, or Hindi. Without a provider key it uses a deterministic local responder backed by a curated destination guide. With a key it calls OpenRouter, Groq, Hugging Face, or OpenAI, and the model may call read-only ARMS tools (flight search, flight details, fare breakdown).
+- The assistant answers in English, Spanish, French, German, Japanese, or Hindi. The operator configures the AI provider on the server; visitors cannot enter their own keys or choose models. With a provider key it calls OpenRouter, Groq, Hugging Face, or OpenAI, and the model may call read-only ARMS tools (flight search by city or airport code, flight details, fare breakdown). Without a key, or when the provider fails, it answers with a deterministic local responder backed by a curated destination guide and ARMS flight data.
+- On OpenRouter the default model is `openrouter/free`, which OpenRouter routes to a currently available free model that supports tool calling, so retired free models do not break the assistant. Set `AI_MODEL` to pin one model for more consistent answers. If a model rejects tool calls, ARMS repeats the request without tools; if a model returns an empty reply or writes tool-call markup as text, ARMS tries once more. Rate-limit errors are not retried. Failed calls are logged with the provider's error message.
 - Booking references typed into chat are never sent to a model; the user is directed to the verified guest lookup instead.
 - The flight tracker queries AviationStack when configured, falls back to OpenSky Network, and finally to the ARMS schedule. The OpenSky worldwide state feed is cached for 15 seconds and shared by all lookups; when it cannot be reached, ARMS waits 60 seconds before trying again instead of making every visitor wait for the timeout.
 - A small round AI Travel Agent button sits in the bottom-right corner on browsing pages. Its name appears on hover or keyboard focus. It hides itself while it would cover a link, button, or form field and returns once the area is clear, so it never blocks a control. Visitors can hide it with its close button; that choice is stored in the browser's `localStorage` and the agent stays reachable from the navigation menu and footer. The button is not shown on sign-in, registration, password recovery, seat selection, passenger details, the chat page itself, the operations console, Django admin, or to administrators.
@@ -105,7 +106,7 @@ Django 6.1 is available, but WhiteNoise 6.12.0 currently declares support up to 
 ├── .flake8, .editorconfig, .pre-commit-config.yaml
 └── .github/workflows/
     ├── ci.yml                    Lint, checks, and tests on every push and pull request
-    └── migrate.yml               Applies migrations to the production database on pushes to main
+    └── production-database.yml   Migrates, seeds an empty database, and keeps 30 days of flights scheduled
 ```
 
 Every app keeps its templates under `templates/<app_label>/` and its tests in a `tests/` package, as recommended by Django for namespaced, reusable apps.
@@ -335,8 +336,11 @@ Environment variables (all optional in development; empty values count as unset)
 | `AVIATIONSTACK_API_KEY` | Enables AviationStack live flight lookups. |
 | `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `HUGGINGFACE_API_KEY`, `OPENAI_API_KEY` | Server-wide LLM provider keys. The first configured one is used in automatic mode. |
 | `AI_API_KEY` | Generic fallback key; the provider is inferred from the key prefix. |
+| `AI_MODEL` | Model name sent to the provider. Defaults to `openrouter/free` on OpenRouter and to a fixed model for the other providers. |
 
-Users can also enter a provider key in the assistant's settings dialog. That key is stored only in their session.
+To confirm the assistant can reach its provider, run `python manage.py check_ai_provider` with the same environment variables. It sends one short test message and prints the reply or the provider's error.
+
+OpenRouter's free models are limited per account: its free-models page lists 20 requests per minute and 50 per day, rising to 1,000 per day once about $10 of credits has been bought, and failed requests count too. Every visitor shares the site's key, and a message that looks up flights uses two requests, so a public deployment needs credits or a paid model.
 
 ## Deployment
 
@@ -364,23 +368,23 @@ The production settings are read during the build as well as at runtime, so set 
    | `CSRF_TRUSTED_ORIGINS` | `https://your-project.vercel.app` and any custom domain |
    | `DATABASE_CONN_MAX_AGE` | `0`, because Neon's pooled connection already pools |
    | `SITE_URL` | `https://your-project.vercel.app` |
-   | `OPENROUTER_API_KEY` | Optional, enables the AI travel assistant |
+   | `OPENROUTER_API_KEY` | Enables AI answers in the travel assistant |
+   | `AI_MODEL` | Optional; pins one OpenRouter model instead of `openrouter/free` |
    | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Needed for two-factor sign-in codes |
 
 4. In GitHub, open the repository's Settings, then Secrets and variables, then Actions, and add a repository secret named `PRODUCTION_DATABASE_URL` holding the `DATABASE_URL_UNPOOLED` value.
-5. Vercel deploys `main` to production. To use another branch, change Settings, then Environments, then Production, then Branch Tracking, and change the branch in `.github/workflows/migrate.yml` to match.
-6. Push to `main`, or run the Migrate production database workflow from the Actions tab, to create the tables.
+5. Vercel deploys `main` to production. To use another branch, change Settings, then Environments, then Production, then Branch Tracking, and change the branch in `.github/workflows/production-database.yml` to match.
+6. Push to `main`, or run the Update production database workflow from the Actions tab. On an empty database it creates the tables, loads the sample airlines, airports, aircraft, and recurring schedules, and generates flights for the next 30 days.
 7. Create the first administrator from your computer, using the `DATABASE_URL_UNPOOLED` value:
 
    ```bash
    DJANGO_SETTINGS_MODULE=config.settings.production SECRET_KEY=setup-only ALLOWED_HOSTS=localhost DATABASE_URL="paste-DATABASE_URL_UNPOOLED-here" python manage.py createsuperuser
    ```
 
-   The same command with `import_data` instead of `createsuperuser` loads the sample airlines, airports, and flights.
 
 #### After setup
 
-Every push to `main` deploys automatically, and the Migrate production database workflow applies any new migrations at the same time. The two run independently and either can finish first, so keep migrations backward compatible: add columns and tables first and remove old ones in a later release. If the `PRODUCTION_DATABASE_URL` secret is missing, the workflow skips with a warning instead of failing.
+Every push to `main` deploys automatically, and the Update production database workflow applies any new migrations at the same time. The workflow also runs every day at 20:41 UTC to keep 30 days of scheduled flights ahead; GitHub pauses scheduled workflows in repositories with no activity for 60 days. The two run independently and either can finish first, so keep migrations backward compatible: add columns and tables first and remove old ones in a later release. If the `PRODUCTION_DATABASE_URL` secret is missing, the workflow skips with a warning instead of failing.
 
 #### Limitations on Vercel
 
@@ -396,8 +400,9 @@ The `Dockerfile` builds a production image: it installs runtime dependencies, co
 
 | Command | Purpose |
 | --- | --- |
-| `python manage.py import_data` | Loads the sample airlines, airports, aircraft, and flights from `apps/flights/seed_data/`. Flights in the past are moved forward by whole years. Safe to run more than once. |
-| `python manage.py generate_recurring_flights --days 30` | Generates flights from active schedules. Use `--schedules CODE ...` to limit it. Without schedules it clones existing flights for each day. `--clear` deletes future flights that have no reservations. |
+| `python manage.py import_data` | Loads the sample airlines, airports, aircraft, flights, and daily recurring schedules from `apps/flights/seed_data/`. Flights in the past are moved forward by whole years. Safe to run more than once. With `--if-empty` it does nothing when any airline or airport already exists, so it never overwrites records an administrator has edited. |
+| `python manage.py generate_recurring_flights --days 30` | Generates flights from active schedules and skips flights that already exist. Use `--schedules CODE ...` to limit it. Without schedules it does nothing and says so. `--clear` deletes future flights that have no reservations. |
+| `python manage.py check_ai_provider` | Sends one test message to the configured AI provider and prints the reply or the error. |
 | `python manage.py list_upcoming_flights --days 7` | Lists upcoming flights with remaining seats. Filters: `--airline`, `--airport`. |
 | `python manage.py price_stats` | Prints fare statistics for domestic flights. |
 | `python manage.py createsuperuser` | Creates an administrator who can use both the console and Django admin. |
@@ -416,7 +421,7 @@ black --check . && isort --check-only . && flake8 .
 pre-commit install
 ```
 
-The suite contains 169 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
+The suite contains 180 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
 
 ## Usability study
 
@@ -540,3 +545,12 @@ The codebase was restructured from a single `armsApp` application into the apps 
 - Python is pinned to 3.13 in `.python-version`, matching the Docker image and CI.
 - `manage.py` chooses production settings when `VERCEL` is set.
 - The new `.github/workflows/migrate.yml` applies migrations on pushes to `main` using the `PRODUCTION_DATABASE_URL` secret.
+
+### Server-side AI configuration and seeded schedules
+
+- The chat page no longer offers an API key, provider, or model setting, and the chat API ignores any it receives. The provider key comes from the server environment and the model from `AI_MODEL`.
+- The previous default model, `meta-llama/llama-3.3-70b-instruct:free`, and the other free models listed in the old dialog are no longer offered by OpenRouter, so every AI call failed and the assistant fell back to local answers. The default is now `openrouter/free`.
+- The flight search tool now matches city names, so "Paris" or "Mumbai" find flights even though the airports are named Charles de Gaulle and Chhatrapati Shivaji Maharaj.
+- `apps/flights/seed_data/schedules.csv` adds 35 daily schedules: Indian domestic routes and routes from India to Dubai, Singapore, London, Paris, and Tokyo, with fares in rupees and clearly fictional flight numbers.
+- `generate_recurring_flights` no longer clones existing flights when no schedules exist. That fallback also cloned earlier clones, so each run multiplied the number of flights.
+- `migrate.yml` became `production-database.yml` ("Update production database"). It also seeds an empty database and runs daily to keep 30 days of flights ahead.
