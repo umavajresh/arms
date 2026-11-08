@@ -47,3 +47,9 @@ def read_required_list(name):
     if not values:
         raise ImproperlyConfigured("The %s environment variable is required." % name)
     return values
+
+
+def default_settings_module():
+    if read_bool("VERCEL"):
+        return "config.settings.production"
+    return "config.settings.development"

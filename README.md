@@ -59,7 +59,7 @@ Project demonstration: [YouTube video](https://youtu.be/EJkb_slY4gU?si=LH_LaqsJE
 
 | Component | Choice |
 | --- | --- |
-| Language | Python 3.12 or newer (the Docker image uses 3.13) |
+| Language | Python 3.13, pinned in `.python-version` and used by Vercel, Docker, and CI |
 | Framework | Django 6.0.10 (latest 6.0 patch release) |
 | Database | SQLite for quick local runs, PostgreSQL through `DATABASE_URL` for Docker and production |
 | Static files | WhiteNoise 6.12.0 |
@@ -74,7 +74,6 @@ Django 6.1 is available, but WhiteNoise 6.12.0 currently declares support up to 
 
 ```text
 .
-├── api/index.py                  Vercel serverless entry point
 ├── apps/
 │   ├── core/                     Cross-cutting infrastructure only (no models)
 │   ├── pages/                    Landing page, terms, privacy
@@ -91,17 +90,22 @@ Django 6.1 is available, but WhiteNoise 6.12.0 currently declares support up to 
 │   │   ├── development.py        DEBUG on, console email, local defaults
 │   │   ├── production.py         Required secrets, HTTPS hardening, WhiteNoise storage
 │   │   └── test.py               Fast hashing, in-memory email and cache
-│   ├── environment.py            Typed environment-variable readers
+│   ├── environment.py            Typed environment-variable readers and default settings choice
 │   ├── admin.py, apps.py         Custom default admin site (Django's documented override)
 │   ├── urls.py, wsgi.py, asgi.py
 ├── static/                       First-party CSS/JS/images and vendored libraries
 ├── templates/                    Shared layout, navigation, Django admin overrides
 ├── manage.py
-├── Dockerfile, docker-compose.yml, vercel.json
-├── requirements.txt              Runtime dependencies (also read by Vercel)
+├── Dockerfile, docker-compose.yml
+├── vercel.json, .vercelignore    Selects Vercel's Django preset; keeps local files out of uploads
+├── .python-version               Python 3.13 for Vercel, CI, and local tools
+├── pyproject.toml                Runtime dependencies (read by Vercel) and tool settings
+├── requirements.txt              The same runtime dependencies for pip, Docker, and CI
 ├── requirements-dev.txt          Runtime plus formatting, linting, coverage, pre-commit
-├── pyproject.toml, .flake8, .editorconfig, .pre-commit-config.yaml
-└── .github/workflows/ci.yml
+├── .flake8, .editorconfig, .pre-commit-config.yaml
+└── .github/workflows/
+    ├── ci.yml                    Lint, checks, and tests on every push and pull request
+    └── migrate.yml               Applies migrations to the production database on pushes to main
 ```
 
 Every app keeps its templates under `templates/<app_label>/` and its tests in a `tests/` package, as recommended by Django for namespaced, reusable apps.
@@ -305,8 +309,8 @@ Settings are split by environment and selected with `DJANGO_SETTINGS_MODULE`:
 
 | Module | Used by default by |
 | --- | --- |
-| `config.settings.development` | `manage.py`, the Docker `web` service |
-| `config.settings.production` | `config/wsgi.py`, `config/asgi.py`, the Docker image, Vercel |
+| `config.settings.development` | `manage.py` on your machine, the Docker `web` service |
+| `config.settings.production` | `config/wsgi.py`, `config/asgi.py`, the Docker image, and `manage.py` on Vercel (where Vercel sets `VERCEL=1`) |
 | `config.settings.test` | Pass it explicitly when running tests |
 
 Environment variables (all optional in development; empty values count as unset):
@@ -338,19 +342,51 @@ Users can also enter a provider key in the assistant's settings dialog. That key
 
 ### Vercel (production)
 
-`vercel.json` builds `api/index.py` with the Python runtime and serves the `static/` directory directly. `api/index.py` adds the project root to the import path and exposes the WSGI application from `config/wsgi.py`, which defaults to production settings. Dependencies come from the root `requirements.txt`.
+Vercel builds the project with its built-in Django support. `vercel.json` only selects the `django` framework preset. During each build Vercel:
 
-1. Provision a PostgreSQL database and set `DATABASE_URL`, `SECRET_KEY`, `ALLOWED_HOSTS` (for example `your-app.vercel.app`), and `CSRF_TRUSTED_ORIGINS` (for example `https://your-app.vercel.app`) in the Vercel project settings. Consider `DATABASE_CONN_MAX_AGE=0` unless the database provides pooling.
-2. Configure SMTP variables if passengers will use two-factor authentication.
-3. Apply migrations against the production database from a trusted machine:
+1. Installs Python 3.13 (from `.python-version`) and the dependencies listed in `pyproject.toml`. Vercel reads `pyproject.toml` in preference to `requirements.txt`, so both files list the same packages and a test fails if they drift apart.
+2. Runs `manage.py` to find the settings module. Vercel sets `VERCEL=1` during builds and at runtime, and `manage.py` then chooses `config.settings.production`. No `DJANGO_SETTINGS_MODULE` variable is needed.
+3. Runs `collectstatic` and serves the result, including the Django admin's styles, from Vercel's CDN at `/static/`. WhiteNoise is left out of the middleware on Vercel because the CDN already serves these files.
+4. Serves every other request through `config.wsgi.application`.
+
+The production settings are read during the build as well as at runtime, so set the environment variables before the first deployment.
+
+#### One-time setup
+
+1. On vercel.com, choose Add New, then Project, import this GitHub repository, and keep the Django preset Vercel selects.
+2. In the project, open Storage and add Neon Postgres. It creates `DATABASE_URL` (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (direct, used for migrations).
+3. In Settings, then Environment Variables, add:
+
+   | Variable | Value |
+   | --- | --- |
+   | `SECRET_KEY` | A long random value, for example from `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+   | `ALLOWED_HOSTS` | `your-project.vercel.app` and any custom domain; add `.vercel.app` to allow preview links |
+   | `CSRF_TRUSTED_ORIGINS` | `https://your-project.vercel.app` and any custom domain |
+   | `DATABASE_CONN_MAX_AGE` | `0`, because Neon's pooled connection already pools |
+   | `SITE_URL` | `https://your-project.vercel.app` |
+   | `OPENROUTER_API_KEY` | Optional, enables the AI travel assistant |
+   | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Needed for two-factor sign-in codes |
+
+4. In GitHub, open the repository's Settings, then Secrets and variables, then Actions, and add a repository secret named `PRODUCTION_DATABASE_URL` holding the `DATABASE_URL_UNPOOLED` value.
+5. Vercel deploys `main` to production. To use another branch, change Settings, then Environments, then Production, then Branch Tracking, and change the branch in `.github/workflows/migrate.yml` to match.
+6. Push to `main`, or run the Migrate production database workflow from the Actions tab, to create the tables.
+7. Create the first administrator from your computer, using the `DATABASE_URL_UNPOOLED` value:
 
    ```bash
-   DJANGO_SETTINGS_MODULE=config.settings.production python manage.py migrate
+   DJANGO_SETTINGS_MODULE=config.settings.production SECRET_KEY=setup-only ALLOWED_HOSTS=localhost DATABASE_URL="paste-DATABASE_URL_UNPOOLED-here" python manage.py createsuperuser
    ```
 
-4. Create an administrator the same way with `createsuperuser`, and optionally load the sample data with `import_data`.
+   The same command with `import_data` instead of `createsuperuser` loads the sample airlines, airports, and flights.
 
-Limitations on Vercel: the serverless filesystem is not persistent, so uploaded airline logos are lost between deployments (use external object storage through the `STORAGES["default"]` setting for durable media). The static route serves the project's `static/` directory only; Django admin assets are not part of it.
+#### After setup
+
+Every push to `main` deploys automatically, and the Migrate production database workflow applies any new migrations at the same time. The two run independently and either can finish first, so keep migrations backward compatible: add columns and tables first and remove old ones in a later release. If the `PRODUCTION_DATABASE_URL` secret is missing, the workflow skips with a warning instead of failing.
+
+#### Limitations on Vercel
+
+- The function's file system is read-only, so uploading an airline logo fails. Durable uploads need object storage configured through `STORAGES["default"]`.
+- Rate limits use the local-memory cache, which is separate for each running instance.
+- Preview deployments use the Preview environment's variables. Give them their own `DATABASE_URL` to keep preview data out of production.
 
 ### Docker
 
@@ -380,7 +416,7 @@ black --check . && isort --check-only . && flake8 .
 pre-commit install
 ```
 
-The suite contains 165 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
+The suite contains 169 tests across all apps and runs against SQLite with the test settings or against PostgreSQL with `DATABASE_URL`. The GitHub Actions workflow runs formatting and lint checks, `manage.py check`, a migration drift check, and the full test suite against PostgreSQL.
 
 ## Usability study
 
@@ -446,6 +482,7 @@ Run a moderated study with real people: three to four participants for each of t
 
 ## Engineering conventions
 
+- Runtime dependencies are listed in both `pyproject.toml` (read by Vercel) and `requirements.txt` (read by pip in Docker and CI). Change both together; `apps/core/tests/test_dependencies.py` fails if they differ or if `.python-version` and the Dockerfile's Python version disagree.
 - Code follows Django's coding style: `black` formatting, `isort` import ordering with the Black profile, `flake8` with an 88-character line limit, absolute imports for other apps and one-dot relative imports within an app.
 - First-party code contains no comments or docstrings. Names are chosen to explain intent, and this README is the single place for explanations. Vendored third-party files in `static/vendor/` are unchanged.
 - Models follow Django's model style order: fields, managers, `Meta`, `__str__`, `save`, then custom methods.
@@ -495,3 +532,11 @@ The codebase was restructured from a single `armsApp` application into the apps 
 - The AI Travel Agent button was redesigned as described in [Travel assistant and tracking](#travel-assistant-and-tracking).
 - The 1.7 MB Font Awesome JavaScript file is no longer loaded, and the 997 KB `wallpaper.jpg`, which a global CSS rule always hid, was removed. `arms.css` had also referenced it through a Django template tag, which a static CSS file cannot use.
 - Engineering fixes: reservation submissions are rate limited; OpenSky responses are cached; automatic flight creation is limited to the booking window; date filters can use indexes; the approval screen counts statuses in one query instead of four.
+
+### Vercel built-in Django deployment
+
+- `api/index.py` and the legacy `builds` and `routes` in `vercel.json` were removed. Vercel's Django preset now builds the project, runs `collectstatic`, and serves static files, including the Django admin's styles, from its CDN.
+- `pyproject.toml` now lists the runtime dependencies. Vercel installs from `pyproject.toml` whenever it exists, and the previous file listed none, so a Vercel build would have deployed without Django installed.
+- Python is pinned to 3.13 in `.python-version`, matching the Docker image and CI.
+- `manage.py` chooses production settings when `VERCEL` is set.
+- The new `.github/workflows/migrate.yml` applies migrations on pushes to `main` using the `PRODUCTION_DATABASE_URL` secret.
