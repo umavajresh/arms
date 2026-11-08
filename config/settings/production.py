@@ -32,6 +32,14 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
+STATIC_FILES_SERVED_BY_PLATFORM_CDN = read_bool("VERCEL")
+if STATIC_FILES_SERVED_BY_PLATFORM_CDN:
+    MIDDLEWARE = [
+        middleware
+        for middleware in MIDDLEWARE
+        if middleware != "whitenoise.middleware.WhiteNoiseMiddleware"
+    ]
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = read_bool("SECURE_SSL_REDIRECT", True)
 SESSION_COOKIE_SECURE = read_bool("SESSION_COOKIE_SECURE", True)

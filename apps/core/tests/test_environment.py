@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
 from config.environment import (
+    default_settings_module,
     read_bool,
     read_int,
     read_list,
@@ -37,3 +38,13 @@ class EnvironmentReaderTests(SimpleTestCase):
                 read_required("SECRET_KEY")
             with self.assertRaisesMessage(ImproperlyConfigured, "ALLOWED_HOSTS"):
                 read_required_list("ALLOWED_HOSTS")
+
+
+class DefaultSettingsModuleTests(SimpleTestCase):
+    def test_vercel_deployments_use_production_settings(self):
+        with patch.dict("os.environ", {"VERCEL": "1"}):
+            self.assertEqual(default_settings_module(), "config.settings.production")
+
+    def test_local_commands_use_development_settings(self):
+        with patch.dict("os.environ", {"VERCEL": ""}):
+            self.assertEqual(default_settings_module(), "config.settings.development")
